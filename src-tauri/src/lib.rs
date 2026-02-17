@@ -52,6 +52,13 @@ pub fn run() {
             library::clear_library,
             library::get_library_stats,
             library::get_cover_art,
+            // browse by artist/album/genre
+            library::get_all_artists,
+            library::get_tracks_by_artist,
+            library::get_all_albums,
+            library::get_tracks_by_album,
+            library::get_all_genres,
+            library::get_tracks_by_genre,
             // music player
             music_player::play_file,
             music_player::get_current_track,
