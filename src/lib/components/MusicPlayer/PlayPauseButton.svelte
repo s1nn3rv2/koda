@@ -3,16 +3,20 @@
     import { cubicInOut } from "svelte/easing";
     import { interpolate } from "flubber";
 
+    const ANIMATION_DURATION = 250;
+
     let { isPlaying, onclick } = $props<{
         isPlaying: boolean;
         onclick: () => void;
     }>();
 
+    // copied from god knows even where
+
     const playLeft = "M 6,4 L 13.25,8.14 L 13.25,15.86 L 6,20 Z";
     const pauseLeft = "M 6,4 L 10,4 L 10,20 L 6,20 Z";
 
     const pathLeft = new Tween(playLeft, {
-        duration: 150,
+        duration: ANIMATION_DURATION,
         easing: cubicInOut,
         interpolate: interpolate,
     });
@@ -21,7 +25,7 @@
     const pauseRight = "M 14,4 L 18,4 L 18,20 L 14,20 Z";
 
     const pathRight = new Tween(playRight, {
-        duration: 300,
+        duration: ANIMATION_DURATION,
         easing: cubicInOut,
         interpolate: interpolate,
     });

@@ -1,44 +1,139 @@
 import { invoke } from "@tauri-apps/api/core";
+import type { Track } from "$lib/types";
 
 class PlayerState {
-    currentTrackPath = $state<string | null>(null);
-    trackName = $state("No track selected");
-    artistName = $state("Unknown Artist");
-    isPlaying = $state(false);
-    isPaused = $state(false);
-    errorMsg = $state("");
+  currentTrackPath = $state<string | null>(null);
+  currentTrackId = $state<string | null>(null);
+  currentTrack = $state<Track | null>(null);
+  trackName = $state("No track selected");
+  artistName = $state("Unknown Artist");
+  isPlaying = $state(false);
+  isPaused = $state(false);
+  errorMsg = $state("");
+  volume = $state(0.5);
+  currentPosition = $state(0);
+  private positionInterval: number | null = null;
 
-    isActuallyPlaying = $derived(this.isPlaying && !this.isPaused);
+  isActuallyPlaying = $derived(this.isPlaying && !this.isPaused);
 
-    async togglePlayPause() {
-        try {
-            if (!this.isPlaying) {
-                if (!this.currentTrackPath) return;
-                await invoke("play_file", {
-                    path: this.currentTrackPath,
-                });
-                this.isPlaying = true;
-                this.isPaused = false;
-            } else if (this.isPaused) {
-                await invoke("resume");
-                this.isPaused = false;
-            } else {
-                await invoke("pause");
-                this.isPaused = true;
-            }
-            this.errorMsg = "";
-        } catch (e) {
-            this.errorMsg = String(e);
-        }
+  async getCurrentTrack() {
+    try {
+      const track: Track | null = await invoke("get_current_track");
+      this.currentTrack = track;
+      if (track) {
+        this.trackName = track.title || "Unknown Track";
+        this.artistName = track.artists || "Unknown Artist";
+      }
+      return track;
+    } catch (e) {
+      this.errorMsg = String(e);
+      return null;
     }
+  }
 
-    async nextTrack() {
-        // Implementation for next track
+  async setVolume() {
+    try {
+      await invoke("set_volume", { volume: this.volume });
+      this.errorMsg = "";
+    } catch (e) {
+      this.errorMsg = String(e);
     }
+  }
 
-    async prevTrack() {
-        // Implementation for prev track
+  async togglePlayPause() {
+    try {
+      if (!this.isPlaying) {
+        if (!this.currentTrackPath) return;
+        await invoke("play_file", {
+          path: this.currentTrackPath,
+          trackData: this.currentTrack,
+        });
+        this.isPlaying = true;
+        this.isPaused = false;
+        this.startPositionTracking();
+      } else if (this.isPaused) {
+        await invoke("resume");
+        this.isPaused = false;
+        this.startPositionTracking();
+      } else {
+        await invoke("pause");
+        this.isPaused = true;
+        this.stopPositionTracking();
+      }
+      this.errorMsg = "";
+    } catch (e) {
+      this.errorMsg = String(e);
     }
+  }
+
+  async seek(position: number) {
+    try {
+      const wasPlaying = this.isActuallyPlaying;
+      await invoke("seek", { position });
+
+      if (wasPlaying) {
+        this.isPlaying = true;
+        this.isPaused = false;
+        this.startPositionTracking();
+      } else {
+        await this.updatePosition();
+      }
+      this.errorMsg = "";
+    } catch (e) {
+      this.errorMsg = String(e);
+    }
+  }
+
+  async updatePosition() {
+    try {
+      const position: number = await invoke("get_position");
+      this.currentPosition = position;
+
+      if (
+        this.currentTrack?.duration &&
+        position >= this.currentTrack.duration
+      ) {
+        this.isPlaying = false;
+        this.isPaused = false;
+        this.stopPositionTracking();
+      }
+    } catch (e) {
+      console.error("Failed to update position:", e);
+    }
+  }
+
+  startPositionTracking() {
+    this.stopPositionTracking();
+    this.positionInterval = window.setInterval(async () => {
+      if (this.isActuallyPlaying) {
+        await this.updatePosition();
+      }
+    }, 100);
+  }
+
+  stopPositionTracking() {
+    if (this.positionInterval !== null) {
+      clearInterval(this.positionInterval);
+      this.positionInterval = null;
+    }
+  }
+
+  async nextTrack() {
+    // TODO: implement queue
+  }
+
+  async prevTrack() {
+    // TODO: implement queue
+  }
+}
+
+class UIState {
+  isExpanded = $state(false);
+
+  toggleExpanded() {
+    this.isExpanded = !this.isExpanded;
+  }
 }
 
 export const playerState = new PlayerState();
+export const uiState = new UIState();

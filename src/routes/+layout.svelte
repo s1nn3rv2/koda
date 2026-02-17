@@ -6,7 +6,7 @@
 </script>
 
 <div class="min-h-screen bg-[#0a0a0f] text-white">
-    <div class="pb-24">
+    <div class="pb-32">
         {@render children()}
     </div>
     <MusicPlayer />
