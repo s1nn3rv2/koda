@@ -21,29 +21,20 @@
 >
     {#each waveformData.samples as sample, i}
         {@const barProgress = (i / waveformData.samples.length) * 100}
+        {@const isPlayed = barProgress <= progress}
         {@const isHovered = isHovering && barProgress <= hoverPosition}
+        {@const barHeight = Math.max(sample * 100, 1)}
         <rect
             x={i}
-            y={50 - sample * 45}
+            y={50 - barHeight / 2}
             width="1"
-            height={sample * 90}
-            class={isHovered
-                ? "fill-white/30 transition-colors"
-                : "fill-white/20 transition-colors"}
+            height={barHeight}
+            class={isPlayed
+                ? "fill-indigo-400"
+                : isHovered
+                  ? "fill-white/30"
+                  : "fill-white/20"}
         />
-    {/each}
-
-    <!-- played waveform -->
-    {#each waveformData.samples as sample, i}
-        {#if (i / waveformData.samples.length) * 100 <= progress}
-            <rect
-                x={i}
-                y={50 - sample * 45}
-                width="1"
-                height={sample * 90}
-                class="fill-indigo-400"
-            />
-        {/if}
     {/each}
 </svg>
 
