@@ -1,4 +1,5 @@
 use rusqlite::{Connection, Result as SqliteResult, Row};
+use std::collections::HashMap;
 use std::sync::Mutex;
 
 use super::models::{LibraryStats, Track};
@@ -16,37 +17,30 @@ impl TrackRepository {
         })
     }
 
-    pub fn insert(&self, track: &Track) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
-        conn.execute(
-            "INSERT OR REPLACE INTO tracks (id, path, title, artists, album, duration, track_number, added_at, cover_hash)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
-            rusqlite::params![
-                &track.id,
-                &track.path,
-                &track.title,
-                &track.artists,
-                &track.album,
-                &track.duration,
-                &track.track_number,
-                &track.added_at,
-                &track.cover_hash,
-            ],
-        )?;
-        Ok(())
-    }
-
     pub fn insert_batch(&self, tracks: &[Track]) -> SqliteResult<usize> {
         let mut conn = self.conn.lock().unwrap();
+
+        // build a map of existing path -> id so we can preserve IDs on rescan
+        let existing_ids: HashMap<String, String> = {
+            let mut stmt = conn.prepare("SELECT path, id FROM tracks")?;
+            let rows = stmt.query_map([], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+            })?;
+            rows.filter_map(|r| r.ok()).collect()
+        };
+
         let tx = conn.transaction()?;
 
         let mut inserted = 0;
         for track in tracks {
+            // reuse existing ID for the same path to avoid orphaned cache
+            let id = existing_ids.get(&track.path).unwrap_or(&track.id);
+
             tx.execute(
                 "INSERT OR REPLACE INTO tracks (id, path, title, artists, album, duration, track_number, added_at, cover_hash)
                  VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
                 rusqlite::params![
-                    &track.id,
+                    id,
                     &track.path,
                     &track.title,
                     &track.artists,
@@ -72,22 +66,6 @@ impl TrackRepository {
         )?;
 
         let mut rows = stmt.query([id])?;
-
-        if let Some(row) = rows.next()? {
-            Ok(Some(row_to_track(row)?))
-        } else {
-            Ok(None)
-        }
-    }
-
-    pub fn get_by_path(&self, path: &str) -> SqliteResult<Option<Track>> {
-        let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare(
-            "SELECT id, path, title, artists, album, duration, track_number, added_at, cover_hash
-             FROM tracks WHERE path = ?1",
-        )?;
-
-        let mut rows = stmt.query([path])?;
 
         if let Some(row) = rows.next()? {
             Ok(Some(row_to_track(row)?))
@@ -132,12 +110,6 @@ impl TrackRepository {
         let conn = self.conn.lock().unwrap();
         conn.execute("DELETE FROM tracks", [])?;
         Ok(())
-    }
-
-    pub fn count(&self) -> SqliteResult<i64> {
-        let conn = self.conn.lock().unwrap();
-        let count: i64 = conn.query_row("SELECT COUNT(*) FROM tracks", [], |row| row.get(0))?;
-        Ok(count)
     }
 
     pub fn get_stats(&self) -> SqliteResult<LibraryStats> {

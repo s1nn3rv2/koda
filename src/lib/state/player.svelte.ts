@@ -1,6 +1,15 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { Track } from "$lib/types";
 
+interface CurrentTrackData {
+  id: string;
+  path: string;
+  title: string | null;
+  artists: string | null;
+  album: string | null;
+  duration: number | null;
+}
+
 class PlayerState {
   currentTrackPath = $state<string | null>(null);
   currentTrackId = $state<string | null>(null);
@@ -115,6 +124,39 @@ class PlayerState {
     if (this.positionInterval !== null) {
       clearInterval(this.positionInterval);
       this.positionInterval = null;
+    }
+  }
+
+  async playTrack(track: Track) {
+    this.currentTrackPath = track.path;
+    this.currentTrackId = track.id;
+    this.currentPosition = 0;
+    this.isPlaying = true;
+    this.isPaused = false;
+
+    this.currentTrack = track;
+    this.trackName = track.title || "Unknown Track";
+    this.artistName = track.artists || "Unknown Artist";
+
+    const trackData: CurrentTrackData = {
+      id: track.id,
+      path: track.path,
+      title: track.title,
+      artists: track.artists,
+      album: track.album,
+      duration: track.duration,
+    };
+
+    try {
+      await invoke("play_file", {
+        path: track.path,
+        trackData,
+      });
+      this.startPositionTracking();
+      this.errorMsg = "";
+    } catch (e) {
+      this.errorMsg = String(e);
+      this.isPlaying = false;
     }
   }
 

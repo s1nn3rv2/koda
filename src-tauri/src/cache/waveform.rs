@@ -37,12 +37,4 @@ impl WaveformCache {
         fs::write(&cache_path, json_data)
             .map_err(|e| format!("Failed to write waveform cache: {}", e))
     }
-
-    pub fn clear_cache(&self) -> Result<(), String> {
-        fs::remove_dir_all(&self.cache_dir)
-            .map_err(|e| format!("Failed to clear waveform cache: {}", e))?;
-        fs::create_dir_all(&self.cache_dir)
-            .map_err(|e| format!("Failed to recreate cache dir: {}", e))?;
-        Ok(())
-    }
 }

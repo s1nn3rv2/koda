@@ -5,20 +5,22 @@
     import { onMount } from "svelte";
     import { playerState } from "$lib/state/player.svelte";
     import CoverArt from "$lib/components/CoverArt.svelte";
-    import type { Track, ScanProgress } from "$lib/types";
+    import type { Track, ScanProgress, LibraryStats } from "$lib/types";
     import { formatDuration, getFileName, pluralize } from "$lib/utils/format";
 
     let tracks = $state<Track[]>([]);
     let errorMsg = $state("");
     let successMsg = $state("");
     let isScanning = $state(false);
-    let libraryCount = $state(0);
+    let libraryStats = $state<LibraryStats | null>(null);
     let scanProgress = $state<ScanProgress | null>(null);
+
+    const libraryCount = $derived(libraryStats?.total_tracks ?? 0);
 
     async function loadLibrary() {
         try {
             tracks = await invoke("get_all_tracks");
-            libraryCount = await invoke("get_library_stats");
+            libraryStats = await invoke<LibraryStats>("get_library_stats");
             errorMsg = "";
         } catch (e) {
             errorMsg = String(e);
@@ -45,35 +47,7 @@
     }
 
     function playTrack(track: Track) {
-        playerState.currentTrackPath = track.path;
-        playerState.currentTrackId = track.id;
-        playerState.currentPosition = 0;
-        playerState.isPlaying = true;
-        playerState.isPaused = false;
-
-        playerState.currentTrack = track;
-        playerState.trackName = track.title || "Unknown Track";
-        playerState.artistName = track.artists || "Unknown Artist";
-
-        const trackData = {
-            id: track.id,
-            path: track.path,
-            title: track.title,
-            artists: track.artists,
-            album: track.album,
-            duration: track.duration,
-        };
-
-        invoke("play_file", {
-            path: track.path,
-            trackData: trackData,
-        }).catch((e) => {
-            errorMsg = String(e);
-            playerState.isPlaying = false;
-        });
-
-        playerState.startPositionTracking();
-        errorMsg = "";
+        playerState.playTrack(track);
     }
 
     async function deleteTrack(id: string, event: MouseEvent) {

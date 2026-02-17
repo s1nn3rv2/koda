@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { LoaderCircle } from "@lucide/svelte";
     import { uiState } from "$lib/state/player.svelte";
 </script>
 

@@ -1,13 +1,14 @@
 use std::fs::File;
 use std::path::Path;
 
-use symphonia::core::audio::AudioBufferRef;
+use symphonia::core::audio::{AudioBuffer, AudioBufferRef};
 use symphonia::core::codecs::{CODEC_TYPE_NULL, DecoderOptions};
 use symphonia::core::errors::Error;
 use symphonia::core::formats::FormatOptions;
 use symphonia::core::io::MediaSourceStream;
 use symphonia::core::meta::MetadataOptions;
 use symphonia::core::probe::Hint;
+use symphonia::core::sample::Sample;
 
 use super::models::WaveformData;
 
@@ -95,77 +96,22 @@ pub fn generate(audio_path: &str) -> Result<WaveformData, String> {
 
 fn calculate_amplitude(buffer: &AudioBufferRef) -> f32 {
     match buffer {
-        AudioBufferRef::F32(buf) => calculate_rms_f32(buf),
-        AudioBufferRef::F64(buf) => calculate_rms_f64(buf),
-        AudioBufferRef::S16(buf) => calculate_rms_s16(buf),
-        AudioBufferRef::S32(buf) => calculate_rms_s32(buf),
+        AudioBufferRef::F32(buf) => calculate_rms(buf, |s| s as f64),
+        AudioBufferRef::F64(buf) => calculate_rms(buf, |s| s),
+        AudioBufferRef::S16(buf) => calculate_rms(buf, |s| s as f64 / i16::MAX as f64),
+        AudioBufferRef::S32(buf) => calculate_rms(buf, |s| s as f64 / i32::MAX as f64),
         _ => 0.5, // fallback for less common formats
     }
 }
 
-fn calculate_rms_f32(buf: &symphonia::core::audio::AudioBuffer<f32>) -> f32 {
+fn calculate_rms<S: Sample, F: Fn(S) -> f64>(buf: &AudioBuffer<S>, to_f64: F) -> f32 {
     let mut sum = 0.0f64;
-    let mut count = 0;
+    let mut count = 0usize;
 
     for plane in buf.planes().planes() {
         for &sample in plane.iter() {
-            sum += (sample as f64).powi(2);
-            count += 1;
-        }
-    }
-
-    if count > 0 {
-        (sum / count as f64).sqrt() as f32
-    } else {
-        0.0
-    }
-}
-
-fn calculate_rms_f64(buf: &symphonia::core::audio::AudioBuffer<f64>) -> f32 {
-    let mut sum = 0.0f64;
-    let mut count = 0;
-
-    for plane in buf.planes().planes() {
-        for &sample in plane.iter() {
-            sum += sample.powi(2);
-            count += 1;
-        }
-    }
-
-    if count > 0 {
-        (sum / count as f64).sqrt() as f32
-    } else {
-        0.0
-    }
-}
-
-fn calculate_rms_s16(buf: &symphonia::core::audio::AudioBuffer<i16>) -> f32 {
-    let mut sum = 0.0f64;
-    let mut count = 0;
-
-    for plane in buf.planes().planes() {
-        for &sample in plane.iter() {
-            let normalized = sample as f64 / i16::MAX as f64;
-            sum += normalized.powi(2);
-            count += 1;
-        }
-    }
-
-    if count > 0 {
-        (sum / count as f64).sqrt() as f32
-    } else {
-        0.0
-    }
-}
-
-fn calculate_rms_s32(buf: &symphonia::core::audio::AudioBuffer<i32>) -> f32 {
-    let mut sum = 0.0f64;
-    let mut count = 0;
-
-    for plane in buf.planes().planes() {
-        for &sample in plane.iter() {
-            let normalized = sample as f64 / i32::MAX as f64;
-            sum += normalized.powi(2);
+            let s = to_f64(sample);
+            sum += s * s;
             count += 1;
         }
     }

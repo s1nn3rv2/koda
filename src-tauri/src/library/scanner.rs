@@ -114,7 +114,3 @@ pub fn get_cover_art_from_file(path: &Path) -> Option<Vec<u8>> {
         .first()
         .map(|picture| picture.data().to_vec())
 }
-
-pub fn count_audio_files(directory: &Path) -> usize {
-    find_audio_files(directory).len()
-}
