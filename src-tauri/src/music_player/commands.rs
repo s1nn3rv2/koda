@@ -1,6 +1,6 @@
 use std::{fs::File, time::Duration};
 
-use rodio::{Decoder, Sink, Source};
+use rodio::{Decoder, Sink};
 use tauri::State;
 
 use super::state::{CurrentTrack, PlayerState};
@@ -89,26 +89,41 @@ pub fn stop(player: State<PlayerState>) -> Result<(), String> {
 pub async fn seek(position: f64, player: State<'_, PlayerState>) -> Result<(), String> {
     let duration = Duration::from_secs_f64(position);
 
-    let (needs_reload, track_data) = {
+    let (current_pos, was_paused, needs_reload, track_data) = {
         let state = player.inner.lock().map_err(|e| e.to_string())?;
         let needs_reload = state.sink.as_ref().map_or(false, |s| s.empty());
+        let current_pos = state.position();
+        let was_paused = state.is_paused;
         let track_data = state.current_track.clone();
-        (needs_reload, track_data)
+        (current_pos, was_paused, needs_reload, track_data)
     };
 
-    if needs_reload {
+    let is_backward = position < current_pos;
+
+    if needs_reload || is_backward {
         let track = track_data.ok_or("No track data available to reload")?;
         play_file(track.path.clone(), Some(track), player.clone()).await?;
     }
 
     let mut state = player.inner.lock().map_err(|e| e.to_string())?;
 
-    if let Some(ref sink) = state.sink {
-        if sink.try_seek(duration).is_ok() {
+    let seek_result = state
+        .sink
+        .as_ref()
+        .ok_or_else(|| "No track currently playing".to_string())?
+        .try_seek(duration);
+
+    match seek_result {
+        Ok(_) => {
             state.seek(position);
+            if was_paused {
+                if let Some(ref sink) = state.sink {
+                    sink.pause();
+                }
+                state.pause();
+            }
         }
-    } else {
-        return Err("No track currently playing".to_string());
+        Err(e) => return Err(format!("Seek failed: {}", e)),
     }
 
     Ok(())

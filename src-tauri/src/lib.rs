@@ -57,6 +57,7 @@ pub fn run() {
             music_player::get_current_track,
             music_player::pause,
             music_player::resume,
+            music_player::stop,
             music_player::set_volume,
             music_player::seek,
             music_player::get_position,

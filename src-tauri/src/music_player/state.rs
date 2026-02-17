@@ -28,15 +28,6 @@ impl From<Track> for CurrentTrack {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum PlaybackState {
-    Idle,
-    Playing,
-    Paused,
-    Stopped,
-}
-
-// all mutable state protected by a single mutex to prevent deadlocks
 pub(super) struct PlayerInnerState {
     pub sink: Option<Sink>,
     pub current_track: Option<CurrentTrack>,
@@ -73,15 +64,6 @@ impl PlayerInnerState {
         }
     }
 
-    pub(crate) fn state(&self) -> PlaybackState {
-        match (&self.sink, self.is_paused) {
-            (None, _) => PlaybackState::Idle,
-            (Some(sink), _) if sink.empty() => PlaybackState::Stopped,
-            (Some(_), true) => PlaybackState::Paused,
-            (Some(_), false) => PlaybackState::Playing,
-        }
-    }
-
     pub fn reset_position(&mut self) {
         self.playback_start = Some(Instant::now());
         self.seek_offset = 0.0;
@@ -109,7 +91,7 @@ impl PlayerInnerState {
         }
     }
 
-    pub(crate) fn clear(&mut self) {
+    pub fn clear(&mut self) {
         self.sink = None;
         self.current_track = None;
         self.playback_start = None;

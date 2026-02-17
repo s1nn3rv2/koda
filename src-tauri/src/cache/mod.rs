@@ -39,10 +39,4 @@ impl CacheManager {
 
         Ok(())
     }
-
-    pub fn clear_all(&self) -> Result<(), String> {
-        std::fs::remove_dir_all(&self.cache_dir)
-            .map_err(|e| format!("Failed to clear cache: {}", e))?;
-        self.init()
-    }
 }

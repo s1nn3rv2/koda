@@ -62,13 +62,6 @@ impl CoverArtCache {
     pub fn has_thumbnail(&self, hash: &str) -> bool {
         self.get_thumbnail_path(hash).exists()
     }
-
-    pub fn clear_cache(&self) -> Result<(), String> {
-        fs::remove_dir_all(&self.cache_dir).map_err(|e| format!("Failed to clear cache: {}", e))?;
-        fs::create_dir_all(&self.cache_dir)
-            .map_err(|e| format!("Failed to recreate cache dir: {}", e))?;
-        Ok(())
-    }
 }
 
 fn resize_image(data: &[u8], size: u32) -> Result<Vec<u8>, String> {

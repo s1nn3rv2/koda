@@ -27,27 +27,6 @@ impl Track {
             cover_hash: None,
         }
     }
-
-    pub fn has_metadata(&self) -> bool {
-        self.title.is_some() && self.artists.is_some() && self.album.is_some()
-    }
-
-    // fallback to filename if no title
-    pub fn display_title(&self) -> String {
-        self.title.clone().unwrap_or_else(|| {
-            std::path::Path::new(&self.path)
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .unwrap_or("Unknown")
-                .to_string()
-        })
-    }
-
-    pub fn display_artist(&self) -> String {
-        self.artists
-            .clone()
-            .unwrap_or_else(|| "Unknown Artist".to_string())
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
