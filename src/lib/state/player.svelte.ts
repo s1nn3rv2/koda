@@ -77,15 +77,14 @@ class PlayerState {
 
   async seek(position: number) {
     try {
-      const wasPlaying = this.isActuallyPlaying;
       await invoke("seek", { position });
 
-      if (wasPlaying) {
+      if (this.isPaused) {
+        this.currentPosition = position;
+      } else {
         this.isPlaying = true;
         this.isPaused = false;
         this.startPositionTracking();
-      } else {
-        await this.updatePosition();
       }
       this.errorMsg = "";
     } catch (e) {

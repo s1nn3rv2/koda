@@ -13,7 +13,7 @@ pub async fn play_file(
 ) -> Result<(), String> {
     let source = tokio::task::spawn_blocking(move || {
         let file = File::open(&path).map_err(|e| format!("Failed to open file: {}", e))?;
-        Decoder::new(std::io::BufReader::new(file)).map_err(|e| format!("Decode failed: {}", e))
+        Decoder::try_from(file).map_err(|e| format!("Decode failed: {}", e))
     })
     .await
     .map_err(|e| format!("Task failed: {}", e))??;
@@ -89,18 +89,15 @@ pub fn stop(player: State<PlayerState>) -> Result<(), String> {
 pub async fn seek(position: f64, player: State<'_, PlayerState>) -> Result<(), String> {
     let duration = Duration::from_secs_f64(position);
 
-    let (current_pos, was_paused, needs_reload, track_data) = {
+    let (was_paused, needs_reload, track_data) = {
         let state = player.inner.lock().map_err(|e| e.to_string())?;
         let needs_reload = state.sink.as_ref().map_or(false, |s| s.empty());
-        let current_pos = state.position();
         let was_paused = state.is_paused;
         let track_data = state.current_track.clone();
-        (current_pos, was_paused, needs_reload, track_data)
+        (was_paused, needs_reload, track_data)
     };
 
-    let is_backward = position < current_pos;
-
-    if needs_reload || is_backward {
+    if needs_reload {
         let track = track_data.ok_or("No track data available to reload")?;
         play_file(track.path.clone(), Some(track), player.clone()).await?;
     }
