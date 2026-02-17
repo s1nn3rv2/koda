@@ -189,7 +189,7 @@
                                     </p>
                                 {/if}
                                 {#if track.duration}
-                                    <p class="text-xs text-gray-500 ml-2">
+                                    <p class="text-xs text-gray-500 ml-auto">
                                         {formatDuration(track.duration)}
                                     </p>
                                 {/if}

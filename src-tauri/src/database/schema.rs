@@ -14,30 +14,50 @@ pub fn initialize_schema(conn: &Connection) -> SqliteResult<()> {
 
     let current_version = get_schema_version(conn)?;
 
-    if current_version == 0 {
-        create_initial_schema(conn)?;
+    if current_version < SCHEMA_VERSION {
+        create_schema(conn)?;
         set_schema_version(conn, SCHEMA_VERSION)?;
-    } else if current_version < SCHEMA_VERSION {
-        migrate(conn, current_version, SCHEMA_VERSION)?;
     }
 
     Ok(())
 }
 
-fn create_initial_schema(conn: &Connection) -> SqliteResult<()> {
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS tracks (
+fn create_schema(conn: &Connection) -> SqliteResult<()> {
+    conn.execute_batch(
+        "CREATE TABLE IF NOT EXISTS artists (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE COLLATE NOCASE
+        );
+
+        CREATE TABLE IF NOT EXISTS albums (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL COLLATE NOCASE,
+            cover_hash TEXT,
+            UNIQUE(name)
+        );
+
+        CREATE TABLE IF NOT EXISTS genres (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE COLLATE NOCASE
+        );
+
+        CREATE TABLE IF NOT EXISTS tracks (
             id TEXT PRIMARY KEY,
             path TEXT NOT NULL UNIQUE,
             title TEXT,
-            artists TEXT,
-            album TEXT,
+            album_id TEXT REFERENCES albums(id) ON DELETE SET NULL,
+            genre_id TEXT REFERENCES genres(id) ON DELETE SET NULL,
             duration INTEGER,
             track_number INTEGER,
             added_at INTEGER NOT NULL,
             cover_hash TEXT
-        )",
-        [],
+        );
+
+        CREATE TABLE IF NOT EXISTS track_artists (
+            track_id TEXT NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
+            artist_id TEXT NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
+            PRIMARY KEY (track_id, artist_id)
+        );",
     )?;
 
     create_indices(conn)?;
@@ -45,25 +65,32 @@ fn create_initial_schema(conn: &Connection) -> SqliteResult<()> {
 }
 
 pub fn create_indices(conn: &Connection) -> SqliteResult<()> {
-    conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_artists ON tracks(artists)",
-        [],
-    )?;
-
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_album ON tracks(album)", [])?;
-
-    conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_added_at ON tracks(added_at)",
-        [],
+    conn.execute_batch(
+        "CREATE INDEX IF NOT EXISTS idx_tracks_album_id ON tracks(album_id);
+         CREATE INDEX IF NOT EXISTS idx_tracks_genre_id ON tracks(genre_id);
+         CREATE INDEX IF NOT EXISTS idx_tracks_added_at ON tracks(added_at);
+         CREATE INDEX IF NOT EXISTS idx_track_artists_track ON track_artists(track_id);
+         CREATE INDEX IF NOT EXISTS idx_track_artists_artist ON track_artists(artist_id);
+         CREATE INDEX IF NOT EXISTS idx_artists_name ON artists(name);
+         CREATE INDEX IF NOT EXISTS idx_albums_name ON albums(name);
+         CREATE INDEX IF NOT EXISTS idx_genres_name ON genres(name);",
     )?;
 
     Ok(())
 }
 
 pub fn drop_indices(conn: &Connection) -> SqliteResult<()> {
-    conn.execute("DROP INDEX IF EXISTS idx_artists", [])?;
-    conn.execute("DROP INDEX IF EXISTS idx_album", [])?;
-    conn.execute("DROP INDEX IF EXISTS idx_added_at", [])?;
+    conn.execute_batch(
+        "DROP INDEX IF EXISTS idx_tracks_album_id;
+         DROP INDEX IF EXISTS idx_tracks_genre_id;
+         DROP INDEX IF EXISTS idx_tracks_added_at;
+         DROP INDEX IF EXISTS idx_track_artists_track;
+         DROP INDEX IF EXISTS idx_track_artists_artist;
+         DROP INDEX IF EXISTS idx_artists_name;
+         DROP INDEX IF EXISTS idx_albums_name;
+         DROP INDEX IF EXISTS idx_genres_name;",
+    )?;
+
     Ok(())
 }
 
@@ -88,10 +115,44 @@ fn set_schema_version(conn: &Connection, version: i32) -> SqliteResult<()> {
     Ok(())
 }
 
-fn migrate(conn: &Connection, from: i32, to: i32) -> SqliteResult<()> {
-    for version in (from + 1)..=to {
-        // future migrations would go here
-        set_schema_version(conn, version)?;
+/// Split an artist string into individual artist names
+/// Handles ';', '/', 'feat.', 'ft.'
+pub fn split_artist_names(raw: &str) -> Vec<String> {
+    let mut results = Vec::new();
+
+    for part in raw.split(';') {
+        for sub in part.split('/') {
+            let lowered = sub.to_lowercase();
+            if let Some(pos) = lowered.find("feat.") {
+                let before = &sub[..pos];
+                let after = &sub[pos + 5..];
+                let b = before.trim().to_string();
+                let a = after.trim().to_string();
+                if !b.is_empty() {
+                    results.push(b);
+                }
+                if !a.is_empty() {
+                    results.push(a);
+                }
+            } else if let Some(pos) = lowered.find(" ft.") {
+                let before = &sub[..pos];
+                let after = &sub[pos + 4..];
+                let b = before.trim().to_string();
+                let a = after.trim().to_string();
+                if !b.is_empty() {
+                    results.push(b);
+                }
+                if !a.is_empty() {
+                    results.push(a);
+                }
+            } else {
+                let trimmed = sub.trim().to_string();
+                if !trimmed.is_empty() {
+                    results.push(trimmed);
+                }
+            }
+        }
     }
-    Ok(())
+
+    results
 }

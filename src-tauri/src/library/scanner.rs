@@ -57,24 +57,26 @@ pub fn scan_file(path: &Path) -> Option<ScanResult> {
         .primary_tag()
         .or_else(|| tagged_file.first_tag());
 
-    let (title, artists, album, track_number, cover_data) = if let Some(tag) = tag {
+    let (title, artists, album, genre, track_number, cover_data) = if let Some(tag) = tag {
         let cover_data = tag.pictures().first().map(|pic| pic.data().to_vec());
 
         (
             tag.title().map(|s| s.to_string()),
             tag.artist().map(|s| s.to_string()),
             tag.album().map(|s| s.to_string()),
+            tag.genre().map(|s| s.to_string()),
             tag.track().map(|n| n as i32),
             cover_data,
         )
     } else {
-        (None, None, None, None, None)
+        (None, None, None, None, None, None)
     };
 
     let mut track = Track::new(path_str.to_string());
     track.title = title;
     track.artists = artists;
     track.album = album;
+    track.genre = genre;
     track.duration = duration;
     track.track_number = track_number;
 

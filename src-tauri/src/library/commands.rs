@@ -9,7 +9,9 @@ use tauri::{AppHandle, Emitter, Manager, State};
 
 use crate::cache::CacheManager;
 use crate::cache::cover_art::CoverArtCache;
-use crate::database::{LibraryStats, Track, TrackRepository};
+use crate::database::{
+    AlbumWithCount, ArtistWithCount, GenreWithCount, LibraryStats, Track, TrackRepository,
+};
 
 use super::scanner;
 
@@ -128,6 +130,51 @@ pub fn clear_library(db: State<'_, TrackRepository>) -> Result<(), String> {
 #[tauri::command]
 pub fn get_library_stats(db: State<'_, TrackRepository>) -> Result<LibraryStats, String> {
     db.get_stats().map_err(|e: rusqlite::Error| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_all_artists(db: State<'_, TrackRepository>) -> Result<Vec<ArtistWithCount>, String> {
+    db.get_all_artists()
+        .map_err(|e: rusqlite::Error| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_tracks_by_artist(
+    artist_id: String,
+    db: State<'_, TrackRepository>,
+) -> Result<Vec<Track>, String> {
+    db.get_tracks_by_artist(&artist_id)
+        .map_err(|e: rusqlite::Error| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_all_albums(db: State<'_, TrackRepository>) -> Result<Vec<AlbumWithCount>, String> {
+    db.get_all_albums()
+        .map_err(|e: rusqlite::Error| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_tracks_by_album(
+    album_id: String,
+    db: State<'_, TrackRepository>,
+) -> Result<Vec<Track>, String> {
+    db.get_tracks_by_album(&album_id)
+        .map_err(|e: rusqlite::Error| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_all_genres(db: State<'_, TrackRepository>) -> Result<Vec<GenreWithCount>, String> {
+    db.get_all_genres()
+        .map_err(|e: rusqlite::Error| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_tracks_by_genre(
+    genre_id: String,
+    db: State<'_, TrackRepository>,
+) -> Result<Vec<Track>, String> {
+    db.get_tracks_by_genre(&genre_id)
+        .map_err(|e: rusqlite::Error| e.to_string())
 }
 
 #[tauri::command]
