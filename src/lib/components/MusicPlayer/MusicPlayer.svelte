@@ -5,62 +5,29 @@
     import Volume from "./Volume.svelte";
     import ShuffleControl from "./ShuffleControl.svelte";
 
-    function createBloom(color: string) {
-        const rgb = color.match(/\d+/g)?.map(Number);
-        if (!rgb || rgb.length < 3) return "";
-        const [r, g, b] = rgb;
+    const defaultColor = "99, 102, 241";
 
-        return `radial-gradient(circle at 50% 120%, rgba(${r}, ${g}, ${b}, 0.3) 0%, rgba(${r}, ${g}, ${b}, 0.05) 60%, transparent 100%)`;
-    }
+    const extractRgb = (colorString: string | null) => {
+        if (!colorString) return defaultColor;
+        const rgb = colorString.match(/\d+/g)?.map(Number);
+        if (!rgb || rgb.length < 3) return defaultColor;
+        return `${rgb[0]}, ${rgb[1]}, ${rgb[2]}`;
+    };
 
-    const defaultBloom =
-        "radial-gradient(circle at 50% 120%, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0.03) 60%, transparent 100%)";
-
-    let layerABloom = $state(defaultBloom);
-    let layerBBloom = $state(defaultBloom);
-    let activeLayer = $state<"A" | "B">("A");
-
-    $effect(() => {
-        const newColor = playbackState.dominantColor;
-        const targetBloom = newColor ? createBloom(newColor) : defaultBloom;
-
-        if (activeLayer === "A" && targetBloom !== layerABloom) {
-            layerBBloom = targetBloom;
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    activeLayer = "B";
-                });
-            });
-        } else if (activeLayer === "B" && targetBloom !== layerBBloom) {
-            layerABloom = targetBloom;
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    activeLayer = "A";
-                });
-            });
-        }
-    });
+    const currentColor = $derived(extractRgb(playbackState.dominantColor));
 </script>
 
 <footer
     class="fixed bottom-0 left-0 right-0 z-50 border-t border-white/[0.08] overflow-hidden shadow-[0_-8px_40px_rgba(0,0,0,0.6)]"
     style="background: rgba(12, 12, 15, 0.98); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); tra"
 >
-    <div class="absolute inset-0 z-0 pointer-events-none">
-        <!-- bloom 1 -->
+    <div
+        class="absolute inset-0 z-0 pointer-events-none transition-colors duration-1000 ease-in-out"
+        style="background-color: rgba({currentColor}, 0.15);"
+    >
         <div
-            class="absolute inset-0 transition-opacity duration-1000 ease-in-out"
-            style="background: {layerABloom}; opacity: {activeLayer === 'A'
-                ? 1
-                : 0};"
-        ></div>
-
-        <!-- bloom 2 -->
-        <div
-            class="absolute inset-0 transition-opacity duration-1000 ease-in-out"
-            style="background: {layerBBloom}; opacity: {activeLayer === 'B'
-                ? 1
-                : 0};"
+            class="absolute w-[150%] h-[150%] -left-[25%] -top-[25%] transition-colors duration-1000 ease-in-out"
+            style="background-color: rgba({currentColor}, 0.35); mask-image: radial-gradient(circle at 50% 80%, black 0%, transparent 60%); -webkit-mask-image: radial-gradient(circle at 50% 80%, black 0%, transparent 60%); mix-blend-mode: screen;"
         ></div>
 
         <div

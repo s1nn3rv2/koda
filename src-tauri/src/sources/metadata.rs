@@ -5,13 +5,14 @@ use crate::sources::{itunes, musicbrainz};
 use lazy_static::lazy_static;
 use musicbrainz_rs::client::MusicBrainzClient;
 use serde::Deserialize;
-use std::collections::HashSet;
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tauri::State;
+use tokio::sync::broadcast;
 
 lazy_static! {
-    static ref ONGOING_ALBUM_FETCHES: Mutex<HashSet<String>> = Mutex::new(HashSet::new());
-    static ref ONGOING_ARTIST_FETCHES: Mutex<HashSet<String>> = Mutex::new(HashSet::new());
+    static ref ONGOING_ALBUM_FETCHES: Mutex<HashMap<String, broadcast::Sender<()>>> = Mutex::new(HashMap::new());
+    static ref ONGOING_ARTIST_FETCHES: Mutex<HashMap<String, broadcast::Sender<()>>> = Mutex::new(HashMap::new());
 }
 
 #[derive(Debug, Deserialize, Clone, Copy, PartialEq)]
@@ -48,17 +49,19 @@ pub async fn fetch_artist_metadata(
     let p = MetadataProvider::from(provider);
     let force = force.unwrap_or(false);
 
-    loop {
-        let is_ongoing = {
-            let ongoing = ONGOING_ARTIST_FETCHES.lock().unwrap();
-            ongoing.contains(&artist_id)
-        };
-
-        if !is_ongoing {
-            break;
+    let mut rx = {
+        let mut ongoing = ONGOING_ARTIST_FETCHES.lock().unwrap();
+        if let Some(tx) = ongoing.get(&artist_id) {
+            Some(tx.subscribe())
+        } else {
+            let (tx, _) = broadcast::channel(1);
+            ongoing.insert(artist_id.clone(), tx);
+            None
         }
+    };
 
-        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+    if let Some(mut rx) = rx {
+        let _ = rx.recv().await;
 
         let artists = db.get_all_artists(None).map_err(|e| e.to_string())?;
         if let Some(artist) = artists.into_iter().find(|a| a.id == artist_id) {
@@ -68,13 +71,11 @@ pub async fn fetch_artist_metadata(
         }
     }
 
-    {
-        let mut ongoing = ONGOING_ARTIST_FETCHES.lock().unwrap();
-        ongoing.insert(artist_id.clone());
-    }
-
     let _guard = scopeguard::guard(artist_id.clone(), |id| {
-        ONGOING_ARTIST_FETCHES.lock().unwrap().remove(&id);
+        let mut ongoing = ONGOING_ARTIST_FETCHES.lock().unwrap();
+        if let Some(tx) = ongoing.remove(&id) {
+            let _ = tx.send(());
+        }
     });
 
     let artist = db
@@ -228,17 +229,19 @@ pub async fn fetch_album_metadata(
         album.name, p
     );
 
-    loop {
-        let is_ongoing = {
-            let ongoing = ONGOING_ALBUM_FETCHES.lock().unwrap();
-            ongoing.contains(&album_id)
-        };
-
-        if !is_ongoing {
-            break;
+    let mut rx = {
+        let mut ongoing = ONGOING_ALBUM_FETCHES.lock().unwrap();
+        if let Some(tx) = ongoing.get(&album_id) {
+            Some(tx.subscribe())
+        } else {
+            let (tx, _) = broadcast::channel(1);
+            ongoing.insert(album_id.clone(), tx);
+            None
         }
+    };
 
-        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+    if let Some(mut rx) = rx {
+        let _ = rx.recv().await;
 
         if let Ok(Some(album)) = db.get_album_by_id(&album_id) {
             if !force
@@ -255,13 +258,11 @@ pub async fn fetch_album_metadata(
         }
     }
 
-    {
-        let mut ongoing = ONGOING_ALBUM_FETCHES.lock().unwrap();
-        ongoing.insert(album_id.clone());
-    }
-
     let _guard = scopeguard::guard(album_id.clone(), |id| {
-        ONGOING_ALBUM_FETCHES.lock().unwrap().remove(&id);
+        let mut ongoing = ONGOING_ALBUM_FETCHES.lock().unwrap();
+        if let Some(tx) = ongoing.remove(&id) {
+            let _ = tx.send(());
+        }
     });
 
     let mut final_date = album.release_date.clone();

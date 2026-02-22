@@ -73,7 +73,39 @@
 
                 thumbnailUrl = url;
 
-                getDominantColor(url).then((color) => {
+                let colorUrl = url;
+                if (
+                    !imageHash.startsWith("online-cover:") &&
+                    !imageHash.startsWith("http")
+                ) {
+                    const base64Data = await invoke<string | null>(
+                        "get_image_by_hash",
+                        {
+                            hash: imageHash,
+                            size: 128,
+                        },
+                    );
+                    if (base64Data) {
+                        colorUrl = `data:image/jpeg;base64,${base64Data}`;
+                    }
+                } else if (url.startsWith("http")) {
+                    try {
+                        const base64Data = await invoke<string>(
+                            "get_image_from_url",
+                            { url },
+                        );
+                        if (base64Data) {
+                            colorUrl = `data:image/jpeg;base64,${base64Data}`;
+                        }
+                    } catch (e) {
+                        console.error(
+                            "Failed to proxy online image for color extraction:",
+                            e,
+                        );
+                    }
+                }
+
+                getDominantColor(colorUrl).then((color) => {
                     if (playbackState.currentTrackId === trackId) {
                         playbackState.dominantColor = color;
                     }

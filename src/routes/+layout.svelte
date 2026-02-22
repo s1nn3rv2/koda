@@ -1,6 +1,7 @@
 <script>
     import MusicPlayer from "$lib/components/MusicPlayer/MusicPlayer.svelte";
     import ContextMenu from "$lib/components/ContextMenu.svelte";
+    import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
     import TitleBar from "$lib/components/TitleBar.svelte";
     import SettingsModal from "$lib/components/Settings/SettingsModal.svelte";
     import "../app.css";
@@ -15,5 +16,6 @@
     </main>
     <MusicPlayer />
     <ContextMenu />
+    <ConfirmDialog />
     <SettingsModal />
 </div>

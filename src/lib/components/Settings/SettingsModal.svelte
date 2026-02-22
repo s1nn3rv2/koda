@@ -403,44 +403,11 @@
                         {/each}
                     </div>
                 </section>
-
-                <section
-                    class="p-6 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl"
-                >
-                    <div class="flex gap-4">
-                        <div
-                            class="w-10 h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center shrink-0"
-                        >
-                            <Music2 size={20} class="text-indigo-400" />
-                        </div>
-                        <div>
-                            <h4 class="text-sm font-bold text-white">
-                                Monochrome Integration
-                            </h4>
-                            <p
-                                class="text-[11px] text-gray-400 mt-1 leading-relaxed"
-                            >
-                                Koda connects to Monochrome/Hi-Fi API instances
-                                to provide online music discovery. Note that
-                                streaming availability depends on the instance
-                                and its current backend health.
-                            </p>
-                        </div>
-                    </div>
-                </section>
             </div>
 
             <div
-                class="px-8 py-5 border-t border-white/5 bg-white/[0.01] flex items-center justify-between"
+                class="px-8 py-5 border-t border-white/5 bg-white/[0.01] flex items-center justify-end"
             >
-                <div class="flex items-center gap-2">
-                    <div
-                        class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"
-                    ></div>
-                    <span class="text-[10px] text-gray-500 font-medium"
-                        >Auto-saving enabled</span
-                    >
-                </div>
                 <button
                     onclick={close}
                     class="px-6 py-2.5 bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/20 active:scale-95"

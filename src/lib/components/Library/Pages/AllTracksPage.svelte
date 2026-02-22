@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { Track, SortColumn, SortDirection } from "$lib/types";
+    import { TRACK_SORT_OPTIONS } from "$lib/constants/sortOptions";
     import TrackList from "../TrackList.svelte";
     import ContentHeader from "../ContentHeader.svelte";
     import SortDropdown from "../SortDropdown.svelte";
@@ -31,34 +32,6 @@
         sortColumn = $bindable(),
         sortDirection = $bindable(),
     }: Props = $props();
-
-    const sortOptions = [
-        {
-            label: "Default",
-            column: "default" as SortColumn,
-            defaultDir: "desc" as SortDirection,
-        },
-        {
-            label: "Title",
-            column: "title" as SortColumn,
-            defaultDir: "asc" as SortDirection,
-        },
-        {
-            label: "Date Added",
-            column: "added_at" as SortColumn,
-            defaultDir: "desc" as SortDirection,
-        },
-        {
-            label: "Release Date",
-            column: "release_date" as SortColumn,
-            defaultDir: "desc" as SortDirection,
-        },
-        {
-            label: "Duration",
-            column: "duration" as SortColumn,
-            defaultDir: "desc" as SortDirection,
-        },
-    ];
 </script>
 
 <ContentHeader
@@ -70,7 +43,7 @@
 >
     {#snippet actions()}
         <SortDropdown
-            options={sortOptions}
+            options={TRACK_SORT_OPTIONS}
             bind:column={sortColumn}
             bind:direction={sortDirection}
         />

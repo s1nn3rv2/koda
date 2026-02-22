@@ -112,6 +112,7 @@ pub fn run() {
             library::update_track_metadata,
             library::get_cover_art,
             library::get_image_by_hash,
+            library::get_image_from_url,
             // browse by artist/album/genre
             library::get_all_artists,
             library::get_tracks_by_artist,

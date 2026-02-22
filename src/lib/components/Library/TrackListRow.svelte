@@ -1,8 +1,9 @@
 <script lang="ts">
-    import { X, Play, Pause, Plus } from "@lucide/svelte";
+    import { X, Plus } from "@lucide/svelte";
     import CoverArt from "$lib/components/CoverArt.svelte";
     import PlayPauseButton from "$lib/components/MusicPlayer/PlayPauseButton.svelte";
     import { formatDuration, getFileName, formatDate } from "$lib/utils/format";
+    import { isTrackActive, isTrackPlaying } from "$lib/utils/trackState";
     import { playbackState } from "$lib/state/playback.svelte";
     import { queueState } from "$lib/state/queue.svelte";
     import type { Track } from "$lib/types";
@@ -32,13 +33,10 @@
     }: TrackProps = $props();
 
     const isActive = $derived(
-        isQueueView && originalIndex !== undefined
-            ? originalIndex === queueState.queueIndex &&
-                  playbackState.currentTrackId !== null
-            : playbackState.currentTrackId === track.id,
+        isTrackActive(track.id, isQueueView, originalIndex),
     );
     const isActuallyPlaying = $derived(
-        isActive && playbackState.isActuallyPlaying,
+        isTrackPlaying(track.id, isQueueView, originalIndex),
     );
 </script>
 

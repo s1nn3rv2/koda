@@ -14,7 +14,6 @@
         Bookmark,
         ChevronRight,
         ChevronDown,
-        ChevronLeft,
     } from "@lucide/svelte";
     import { fade, scale } from "svelte/transition";
     import { invoke } from "@tauri-apps/api/core";
@@ -34,6 +33,13 @@
     let rootPath = $state("");
     let treeData = $state<Record<string, string[]>>({});
     let expandedPaths = $state(new Set<string>());
+    let isImporting = $state(false);
+    let error = $state("");
+
+    const inputClass =
+        "w-full px-4 py-2.5 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-all";
+    const labelClass =
+        "flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1";
 
     async function toggleFolder(path: string) {
         if (expandedPaths.has(path)) {
@@ -44,11 +50,10 @@
             expandedPaths = new Set(expandedPaths);
             if (!treeData[path]) {
                 try {
-                    const children = await invoke<string[]>(
+                    treeData[path] = await invoke<string[]>(
                         "get_subdirectories",
                         { path },
                     );
-                    treeData[path] = children;
                 } catch (e) {
                     console.error("Failed to load subfolders", e);
                 }
@@ -62,11 +67,9 @@
             const rootMatch = settingsState.musicPaths.find((p) =>
                 lastFolder.startsWith(p),
             );
-
             if (rootMatch && lastFolder) {
                 rootPath = rootMatch;
                 targetFolder = lastFolder;
-
                 const parts = lastFolder
                     .replace(rootMatch, "")
                     .split("/")
@@ -84,30 +87,24 @@
             }
         }
     });
+
     $effect(() => {
         if (dl) {
             title = dl.track.title || "";
             artists = dl.track.artists || "";
             album = dl.track.album || "";
             albumArtist = dl.track.album_artist || "";
-
             genre = settingsState.lastImportGenre || dl.track.genre || "";
-
             trackNumber = dl.track.track_number || null;
             discNumber = dl.track.disc_number || null;
             releaseDate = dl.track.release_date || "";
         }
     });
 
-    let isImporting = $state(false);
-    let error = $state("");
-
     async function handleImport() {
         if (!dl || !targetFolder) return;
-
         isImporting = true;
         error = "";
-
         try {
             await invoke("import_downloaded_track", {
                 tempPath: dl.tempPath,
@@ -124,10 +121,8 @@
                     cover_url: dl.coverUrl,
                 },
             });
-
             settingsState.lastImportGenre = genre;
             settingsState.lastImportFolder = targetFolder;
-
             downloadState.clearFinished(dl.id);
             downloadState.trackToImport = null;
             libraryState.refresh();
@@ -142,6 +137,50 @@
         downloadState.trackToImport = null;
     }
 </script>
+
+{#snippet field(
+    Icon: any,
+    label: string,
+    value: string,
+    onInput: (v: string) => void,
+    type?: string,
+)}
+    <div class="space-y-2">
+        <label class={labelClass}>
+            <Icon size={12} />
+            {label}
+        </label>
+        <input
+            {type}
+            {value}
+            oninput={(e) => onInput((e.target as HTMLInputElement).value)}
+            class={inputClass}
+        />
+    </div>
+{/snippet}
+
+{#snippet numberField(
+    Icon: any,
+    label: string,
+    value: number | null,
+    onInput: (v: number | null) => void,
+)}
+    <div class="space-y-2">
+        <label class={labelClass}>
+            <Icon size={12} />
+            {label}
+        </label>
+        <input
+            type="number"
+            value={value ?? ""}
+            oninput={(e) => {
+                const v = (e.target as HTMLInputElement).value;
+                onInput(v ? Number(v) : null);
+            }}
+            class={inputClass}
+        />
+    </div>
+{/snippet}
 
 {#if dl}
     <div
@@ -195,12 +234,9 @@
                 {/if}
 
                 <div class="space-y-3">
-                    <label
-                        class="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1"
+                    <label class={labelClass}
+                        ><Folder size={12} /> Save to Folder</label
                     >
-                        <Folder size={12} />
-                        Save to Folder
-                    </label>
                     <div class="space-y-2">
                         <select
                             value={rootPath}
@@ -246,7 +282,6 @@
                 {#snippet folderNode(path: string, name: string, depth: number)}
                     {@const isExpanded = expandedPaths.has(path)}
                     {@const isSelected = targetFolder === path}
-
                     <div class="space-y-1">
                         <div
                             class="flex items-center gap-1 group"
@@ -257,13 +292,10 @@
                                 class="p-1 hover:bg-white/5 rounded-md transition-colors text-gray-500 hover:text-gray-300"
                                 aria-label={isExpanded ? "Collapse" : "Expand"}
                             >
-                                {#if isExpanded}
-                                    <ChevronDown size={14} />
-                                {:else}
-                                    <ChevronRight size={14} />
-                                {/if}
+                                {#if isExpanded}<ChevronDown
+                                        size={14}
+                                    />{:else}<ChevronRight size={14} />{/if}
                             </button>
-
                             <button
                                 onclick={() => (targetFolder = path)}
                                 class="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-xl text-left text-[13px] transition-all {isSelected
@@ -286,7 +318,6 @@
                                 {/if}
                             </button>
                         </div>
-
                         {#if isExpanded && treeData[path]}
                             <div class="space-y-0.5">
                                 {#each treeData[path] as sub}
@@ -312,103 +343,45 @@
                 <div class="h-px bg-white/5"></div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-2">
-                        <label
-                            class="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1"
-                        >
-                            <Music size={12} /> Title
-                        </label>
-                        <input
-                            bind:value={title}
-                            class="w-full px-4 py-2.5 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-all"
-                        />
-                    </div>
-
-                    <div class="space-y-2">
-                        <label
-                            class="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1"
-                        >
-                            <User size={12} /> Artists (semicolon separated)
-                        </label>
-                        <input
-                            bind:value={artists}
-                            class="w-full px-4 py-2.5 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-all"
-                        />
-                    </div>
-
-                    <div class="space-y-2">
-                        <label
-                            class="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1"
-                        >
-                            <Disc size={12} /> Album
-                        </label>
-                        <input
-                            bind:value={album}
-                            class="w-full px-4 py-2.5 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-all"
-                        />
-                    </div>
-
-                    <div class="space-y-2">
-                        <label
-                            class="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1"
-                        >
-                            <User size={12} /> Album Artist
-                        </label>
-                        <input
-                            bind:value={albumArtist}
-                            class="w-full px-4 py-2.5 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-all"
-                        />
-                    </div>
-
-                    <div class="space-y-2">
-                        <label
-                            class="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1"
-                        >
-                            <Bookmark size={12} /> Genre
-                        </label>
-                        <input
-                            bind:value={genre}
-                            class="w-full px-4 py-2.5 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-all"
-                        />
-                    </div>
-
-                    <div class="space-y-2">
-                        <label
-                            class="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1"
-                        >
-                            <Calendar size={12} /> Release Date
-                        </label>
-                        <input
-                            bind:value={releaseDate}
-                            class="w-full px-4 py-2.5 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-all"
-                        />
-                    </div>
-
+                    {@render field(Music, "Title", title, (v) => (title = v))}
+                    {@render field(
+                        User,
+                        "Artists (semicolon separated)",
+                        artists,
+                        (v) => (artists = v),
+                    )}
+                    {@render field(Disc, "Album", album, (v) => (album = v))}
+                    {@render field(
+                        User,
+                        "Album Artist",
+                        albumArtist,
+                        (v) => (albumArtist = v),
+                    )}
+                    {@render field(
+                        Bookmark,
+                        "Genre",
+                        genre,
+                        (v) => (genre = v),
+                    )}
+                    {@render field(
+                        Calendar,
+                        "Release Date",
+                        releaseDate,
+                        (v) => (releaseDate = v),
+                    )}
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <label
-                                class="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1"
-                            >
-                                <Hash size={12} /> Track #
-                            </label>
-                            <input
-                                type="number"
-                                bind:value={trackNumber}
-                                class="w-full px-4 py-2.5 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-all"
-                            />
-                        </div>
-                        <div class="space-y-2">
-                            <label
-                                class="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1"
-                            >
-                                <Hash size={12} /> Disc #
-                            </label>
-                            <input
-                                type="number"
-                                bind:value={discNumber}
-                                class="w-full px-4 py-2.5 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-all"
-                            />
-                        </div>
+                        {@render numberField(
+                            Hash,
+                            "Track #",
+                            trackNumber,
+                            (v) => (trackNumber = v),
+                        )}
+                        {@render numberField(
+                            Hash,
+                            "Disc #",
+                            discNumber,
+                            (v) => (discNumber = v),
+                        )}
                     </div>
                 </div>
             </div>
@@ -419,9 +392,8 @@
                 <button
                     onclick={cancel}
                     class="px-6 py-2.5 text-gray-400 hover:text-white text-sm font-bold transition-all"
+                    >Cancel</button
                 >
-                    Cancel
-                </button>
                 <button
                     onclick={handleImport}
                     disabled={isImporting || !targetFolder}
@@ -433,8 +405,7 @@
                         ></div>
                         Importing...
                     {:else}
-                        <Check size={18} />
-                        Add to Library
+                        <Check size={18} /> Add to Library
                     {/if}
                 </button>
             </div>

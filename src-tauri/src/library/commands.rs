@@ -570,3 +570,24 @@ pub fn get_subdirectories(path: String) -> Result<Vec<String>, String> {
     dirs.sort_by_key(|a| a.to_lowercase());
     Ok(dirs)
 }
+
+#[command]
+pub async fn get_image_from_url(url: String) -> Result<String, String> {
+    let data = tokio::task::spawn_blocking(move || {
+        let client = reqwest::blocking::Client::new();
+        let response = client.get(&url).send().map_err(|e| e.to_string())?;
+        
+        if !response.status().is_success() {
+            return Err(format!("Failed to fetch image: HTTP {}", response.status()));
+        }
+        
+        response.bytes().map(|b| b.to_vec()).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))??;
+
+    Ok(base64::Engine::encode(
+        &base64::engine::general_purpose::STANDARD,
+        data,
+    ))
+}

@@ -4,7 +4,7 @@
         ListMusic,
         User,
         Disc3,
-        Edit,
+        SquarePen,
         X,
         Trash2,
     } from "@lucide/svelte";
@@ -16,8 +16,7 @@
         contextMenuState,
         type ContextMenuItem,
     } from "$lib/state/context_menu.svelte";
-    import { ask } from "@tauri-apps/plugin-dialog";
-    import { TauriService } from "$lib/utils/tauri";
+    import { confirmDialogState } from "$lib/state/confirm_dialog.svelte";
     import TrackListRow from "./TrackListRow.svelte";
     import TrackGridItem from "./TrackGridItem.svelte";
 
@@ -89,31 +88,36 @@
             menuItems.push(
                 {
                     label: "Edit Tags",
-                    icon: Edit,
+                    icon: SquarePen,
                     onclick: () => libraryState.editTrack(track),
                 },
                 {
                     label: "Delete File",
                     icon: Trash2,
                     variant: "danger",
-                    onclick: async () => {
-                        const confirmed = await ask(
-                            `Are you sure you want to permanently delete "${track.title}" from your disk? This cannot be undone.`,
-                            {
-                                title: "Delete File",
-                                kind: "warning",
-                            },
-                        );
-                        if (confirmed) {
-                            ondeletefile?.(track.id);
-                        }
+                    onclick: () => {
+                        confirmDialogState.open({
+                            title: "Delete File",
+                            message: `Are you sure you want to permanently delete "${track.title}" from your disk? This cannot be undone.`,
+                            confirmLabel: "Delete",
+                            variant: "danger",
+                            onConfirm: () => ondeletefile?.(track.id),
+                        });
                     },
                 },
 
                 {
                     label: "Remove from Library",
                     icon: X,
-                    onclick: () => handleDelete(track.id, e as any),
+                    onclick: () => {
+                        confirmDialogState.open({
+                            title: "Remove from Library",
+                            message: `Remove "${track.title}" from your library? The file will not be deleted from disk.`,
+                            confirmLabel: "Remove",
+                            variant: "danger",
+                            onConfirm: () => handleDelete(track.id),
+                        });
+                    },
                 },
             );
         }

@@ -14,6 +14,7 @@ commands.allow = [
     "update_track_metadata",
     "get_cover_art",
     "get_image_by_hash",
+    "get_image_from_url",
     "get_all_artists",
     "get_tracks_by_artist",
     "get_all_albums",

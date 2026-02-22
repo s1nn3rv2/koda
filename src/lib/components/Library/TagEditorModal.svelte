@@ -10,9 +10,10 @@
         Calendar,
         Hash,
         Layers,
-        Edit,
+        SquarePen,
     } from "@lucide/svelte";
     import { fade, scale } from "svelte/transition";
+    import type { Component } from "svelte";
 
     let track = $derived(libraryState.trackToEdit);
 
@@ -24,8 +25,12 @@
     let discNumber = $state<number | null>(null);
     let releaseDate = $state("");
     let genre = $state("");
-
     let isSaving = $state(false);
+
+    const inputClass =
+        "w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all";
+    const labelClass =
+        "text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2";
 
     $effect(() => {
         if (track) {
@@ -50,8 +55,8 @@
                 artists: artists || null,
                 album: album || null,
                 albumArtist: albumArtist || null,
-                trackNumber: trackNumber,
-                discNumber: discNumber,
+                trackNumber,
+                discNumber,
                 releaseDate: releaseDate || null,
                 genre: genre || null,
             });
@@ -73,6 +78,48 @@
         if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleSave();
     }
 </script>
+
+{#snippet textField(
+    Icon: Component,
+    label: string,
+    value: string,
+    onInput: (v: string) => void,
+    span2?: boolean,
+    placeholder?: string,
+)}
+    <div class={span2 ? "col-span-2 space-y-2" : "space-y-2"}>
+        <label class={labelClass}><Icon size={12} /> {label}</label>
+        <input
+            type="text"
+            {value}
+            oninput={(e) => onInput((e.target as HTMLInputElement).value)}
+            {placeholder}
+            class={inputClass}
+        />
+    </div>
+{/snippet}
+
+{#snippet numField(
+    Icon: Component,
+    label: string,
+    value: number | null,
+    onInput: (v: number | null) => void,
+    placeholder?: string,
+)}
+    <div class="space-y-2">
+        <label class={labelClass}><Icon size={12} /> {label}</label>
+        <input
+            type="number"
+            value={value ?? ""}
+            oninput={(e) => {
+                const v = (e.target as HTMLInputElement).value;
+                onInput(v ? Number(v) : null);
+            }}
+            {placeholder}
+            class={inputClass}
+        />
+    </div>
+{/snippet}
 
 {#if track}
     <div
@@ -103,7 +150,7 @@
                     <div
                         class="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center border border-indigo-500/20 text-indigo-400"
                     >
-                        <Edit size={20} />
+                        <SquarePen size={20} />
                     </div>
                     <div>
                         <h2 class="text-lg font-bold text-white leading-none">
@@ -126,117 +173,68 @@
 
             <div class="p-6 overflow-y-auto max-h-[70vh] custom-scrollbar">
                 <div class="grid grid-cols-2 gap-6">
-                    <div class="col-span-2 space-y-2">
-                        <label
-                            class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2"
-                        >
-                            <Music2 size={12} /> Track Title
-                        </label>
-                        <input
-                            type="text"
-                            bind:value={title}
-                            placeholder="Unknown Title"
-                            class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all"
-                        />
-                    </div>
-
-                    <div class="col-span-2 space-y-2">
-                        <label
-                            class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2"
-                        >
-                            <User size={12} /> Artists (separated with ;)
-                        </label>
-                        <input
-                            type="text"
-                            bind:value={artists}
-                            placeholder="Unknown Artist"
-                            class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all"
-                        />
-                    </div>
-
-                    <div class="space-y-2">
-                        <label
-                            class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2"
-                        >
-                            <Disc size={12} /> Album Name
-                        </label>
-                        <input
-                            type="text"
-                            bind:value={album}
-                            placeholder="Unknown Album"
-                            class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all"
-                        />
-                    </div>
-
-                    <div class="space-y-2">
-                        <label
-                            class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2"
-                        >
-                            <User size={12} /> Album Artist
-                        </label>
-                        <input
-                            type="text"
-                            bind:value={albumArtist}
-                            placeholder="Unknown Album Artist"
-                            class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all"
-                        />
-                    </div>
-
-                    <div class="space-y-2">
-                        <label
-                            class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2"
-                        >
-                            <Calendar size={12} /> Release Date (YYYY-MM-DD)
-                        </label>
-                        <input
-                            type="text"
-                            bind:value={releaseDate}
-                            placeholder="YYYY-MM-DD"
-                            class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all"
-                        />
-                    </div>
-
-                    <div class="space-y-2">
-                        <label
-                            class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2"
-                        >
-                            <Layers size={12} /> Genre
-                        </label>
-                        <input
-                            type="text"
-                            bind:value={genre}
-                            placeholder="Unknown Genre"
-                            class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all"
-                        />
-                    </div>
-
-                    <div class="space-y-2">
-                        <label
-                            class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2"
-                        >
-                            <Hash size={12} /> Track #
-                        </label>
-                        <input
-                            type="number"
-                            bind:value={trackNumber}
-                            placeholder="0"
-                            class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all"
-                        />
-                    </div>
-
-                    <div class="space-y-2">
-                        <label
-                            class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2"
-                        >
-                            <Layers size={12} /> Disc #
-                        </label>
-                        <input
-                            type="number"
-                            bind:value={discNumber}
-                            placeholder="1"
-                            class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all"
-                        />
-                    </div>
+                    {@render textField(
+                        Music2,
+                        "Track Title",
+                        title,
+                        (v) => (title = v),
+                        true,
+                        "Unknown Title",
+                    )}
+                    {@render textField(
+                        User,
+                        "Artists (separated with ;)",
+                        artists,
+                        (v) => (artists = v),
+                        true,
+                        "Unknown Artist",
+                    )}
+                    {@render textField(
+                        Disc,
+                        "Album Name",
+                        album,
+                        (v) => (album = v),
+                        false,
+                        "Unknown Album",
+                    )}
+                    {@render textField(
+                        User,
+                        "Album Artist",
+                        albumArtist,
+                        (v) => (albumArtist = v),
+                        false,
+                        "Unknown Album Artist",
+                    )}
+                    {@render textField(
+                        Calendar,
+                        "Release Date (YYYY-MM-DD)",
+                        releaseDate,
+                        (v) => (releaseDate = v),
+                        false,
+                        "YYYY-MM-DD",
+                    )}
+                    {@render textField(
+                        Layers,
+                        "Genre",
+                        genre,
+                        (v) => (genre = v),
+                        false,
+                        "Unknown Genre",
+                    )}
+                    {@render numField(
+                        Hash,
+                        "Track #",
+                        trackNumber,
+                        (v) => (trackNumber = v),
+                        "0",
+                    )}
+                    {@render numField(
+                        Layers,
+                        "Disc #",
+                        discNumber,
+                        (v) => (discNumber = v),
+                        "1",
+                    )}
                 </div>
             </div>
 
@@ -251,9 +249,8 @@
                     <button
                         onclick={close}
                         class="px-5 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors"
+                        >Cancel</button
                     >
-                        Cancel
-                    </button>
                     <button
                         onclick={handleSave}
                         disabled={isSaving}
@@ -265,8 +262,7 @@
                             ></div>
                             Saving...
                         {:else}
-                            <Save size={16} />
-                            Save Changes
+                            <Save size={16} /> Save Changes
                         {/if}
                     </button>
                 </div>

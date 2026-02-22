@@ -1,12 +1,8 @@
 <script lang="ts">
-    import { X } from "@lucide/svelte";
     import TrackComponent from "./TrackComponent.svelte";
     import { queueState } from "$lib/state/player.svelte";
+    import { createVirtualizer } from "$lib/utils/virtualize.svelte";
     import type { Track } from "$lib/types";
-    import { libraryState } from "$lib/state/library.svelte";
-    import { monochromeService } from "$lib/services/monochrome";
-    import { TauriService } from "$lib/utils/tauri";
-    import { pluralize } from "$lib/utils/format";
 
     interface Props {
         tracks: Track[];
@@ -61,13 +57,11 @@
         queueState.playTrack(track, tracks);
     }
 
-    function handleDelete(id: string, event: MouseEvent) {
-        event.stopPropagation();
+    function handleDelete(id: string) {
         ondelete?.(id);
     }
 
-    function handleDeleteFile(id: string, event: MouseEvent) {
-        event.stopPropagation();
+    function handleDeleteFile(id: string) {
         ondeletefile?.(id);
     }
 
@@ -150,81 +144,25 @@
         dragOverIndex = null;
     }
 
-    // Virtualization logic
-    let containerElement = $state<HTMLElement>();
-    let scrollContainer = $state<HTMLElement | null>(null);
-    let scrollTop = $state(0);
-    let viewportHeight = $state(0);
-
     const rowHeight = $derived.by(() => {
         if (layout === "list") return 60;
         const itemWidth = containerWidth / itemsPerRow;
         return itemWidth + 66;
     });
 
-    const totalRows = $derived(Math.ceil(tracks.length / itemsPerRow));
-    const totalHeight = $derived(totalRows * rowHeight);
-
-    const visibleRows = $derived.by(() => {
-        const start = Math.max(0, Math.floor(scrollTop / rowHeight) - 2);
-        const end = Math.min(
-            totalRows,
-            Math.ceil((scrollTop + viewportHeight) / rowHeight) + 2,
-        );
-        return { start, end };
+    const virtualizer = createVirtualizer({
+        itemsCount: () => tracks.length,
+        itemsPerRow: () => itemsPerRow,
+        rowHeight: () => rowHeight,
     });
 
-    const visibleRange = $derived.by(() => {
-        const startIdx = visibleRows.start * itemsPerRow;
-        const endIdx = Math.min(tracks.length, visibleRows.end * itemsPerRow);
-        return { start: startIdx, end: endIdx };
-    });
-
+    const visibleRange = $derived(virtualizer.visibleRange);
     const visibleTracksSlice = $derived(
         tracks.slice(visibleRange.start, visibleRange.end),
     );
 
-    const translateY = $derived(visibleRows.start * rowHeight);
-
     $effect(() => {
-        let parent = containerElement?.parentElement;
-        while (parent) {
-            const overflow = window.getComputedStyle(parent).overflowY;
-            if (overflow === "auto" || overflow === "scroll") {
-                scrollContainer = parent;
-                break;
-            }
-            parent = parent.parentElement;
-        }
-
-        if (scrollContainer) {
-            let rafId: number | null = null;
-            const handleScroll = () => {
-                if (rafId !== null) return;
-                rafId = requestAnimationFrame(() => {
-                    scrollTop = scrollContainer!.scrollTop;
-                    viewportHeight = scrollContainer!.clientHeight;
-                    rafId = null;
-                });
-            };
-            scrollContainer.addEventListener("scroll", handleScroll, {
-                passive: true,
-            });
-            handleScroll();
-
-            const resizeObserver = new ResizeObserver(handleScroll);
-            resizeObserver.observe(scrollContainer);
-
-            return () => {
-                scrollContainer?.removeEventListener("scroll", handleScroll);
-                resizeObserver.disconnect();
-                if (rafId !== null) cancelAnimationFrame(rafId);
-            };
-        }
-    });
-
-    $effect(() => {
-        if (hasMore && !isLoadingMore && visibleRows.end >= totalRows - 1) {
+        if (hasMore && !isLoadingMore && virtualizer.isAtBottom) {
             onloadmore?.();
         }
     });
@@ -237,16 +175,19 @@
 {:else}
     <div
         class="h-full w-full"
-        bind:this={containerElement}
+        bind:this={virtualizer.containerElement}
         bind:clientWidth={containerWidth}
     >
         {#if tracks.length > 0}
-            <div class="relative w-full" style="height: {totalHeight}px;">
+            <div
+                class="relative w-full"
+                style="height: {virtualizer.totalHeight}px;"
+            >
                 <div
                     class={layout === "grid"
                         ? "grid gap-4 w-full"
                         : "flex flex-col gap-1 w-full"}
-                    style="position: absolute; top: 0; left: 0; right: 0; transform: translateY({translateY}px); {layout ===
+                    style="position: absolute; top: 0; left: 0; right: 0; transform: translateY({virtualizer.translateY}px); {layout ===
                     'grid'
                         ? `grid-template-columns: repeat(${itemsPerRow}, minmax(0, 1fr));`
                         : ''}"

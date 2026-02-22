@@ -2,6 +2,10 @@
     import { onMount, untrack } from "svelte";
     import { invoke } from "@tauri-apps/api/core";
     import { ChevronDown, ChevronUp, RefreshCw } from "@lucide/svelte";
+    import {
+        TRACK_SORT_OPTIONS,
+        ALBUM_SORT_OPTIONS,
+    } from "$lib/constants/sortOptions";
     import type {
         Track,
         ArtistWithCount,
@@ -37,52 +41,6 @@
         sortColumn = $bindable(),
         sortDirection = $bindable(),
     }: Props = $props();
-
-    const sortOptions = [
-        {
-            label: "Default",
-            column: "default" as SortColumn,
-            defaultDir: "desc" as SortDirection,
-        },
-        {
-            label: "Title",
-            column: "title" as SortColumn,
-            defaultDir: "asc" as SortDirection,
-        },
-        {
-            label: "Date Added",
-            column: "added_at" as SortColumn,
-            defaultDir: "desc" as SortDirection,
-        },
-        {
-            label: "Release Date",
-            column: "release_date" as SortColumn,
-            defaultDir: "desc" as SortDirection,
-        },
-        {
-            label: "Duration",
-            column: "duration" as SortColumn,
-            defaultDir: "desc" as SortDirection,
-        },
-    ];
-
-    const albumSortOptions = [
-        {
-            label: "Release Date",
-            column: "release_date" as SortColumn,
-            defaultDir: "desc" as SortDirection,
-        },
-        {
-            label: "Title",
-            column: "title" as SortColumn,
-            defaultDir: "asc" as SortDirection,
-        },
-        {
-            label: "Date Added",
-            column: "added_at" as SortColumn,
-            defaultDir: "desc" as SortDirection,
-        },
-    ];
 
     let albumSortColumn = $state<SortColumn>("release_date");
     let albumSortDirection = $state<SortDirection>("desc");
@@ -213,7 +171,7 @@
             <h2 class="text-xl font-bold">Albums</h2>
             <div class="flex items-center gap-4">
                 <SortDropdown
-                    options={albumSortOptions}
+                    options={ALBUM_SORT_OPTIONS}
                     bind:column={albumSortColumn}
                     bind:direction={albumSortDirection}
                 />
@@ -250,7 +208,7 @@
     <div class="flex items-center justify-between mb-4">
         <h2 class="text-xl font-bold">All Tracks</h2>
         <SortDropdown
-            options={sortOptions}
+            options={TRACK_SORT_OPTIONS}
             bind:column={sortColumn}
             bind:direction={sortDirection}
         />
