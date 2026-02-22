@@ -31,6 +31,7 @@ impl From<Track> for CurrentTrack {
 pub(super) struct PlayerInnerState {
     pub sink: Option<Sink>,
     pub current_track: Option<CurrentTrack>,
+    pub source_url: Option<String>,
     pub playback_start: Option<Instant>,
     pub seek_offset: f64,
     pub is_paused: bool,
@@ -42,6 +43,7 @@ impl Default for PlayerInnerState {
         Self {
             sink: None,
             current_track: None,
+            source_url: None,
             playback_start: None,
             seek_offset: 0.0,
             is_paused: false,
@@ -94,6 +96,7 @@ impl PlayerInnerState {
     pub fn clear(&mut self) {
         self.sink = None;
         self.current_track = None;
+        self.source_url = None;
         self.playback_start = None;
         self.seek_offset = 0.0;
         self.is_paused = false;

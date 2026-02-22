@@ -1,1 +1,15 @@
 @import "tailwindcss";
+
+@theme {
+    --color-brand-primary: var(--color-indigo-500);
+    --color-brand-secondary: var(--color-indigo-400);
+    --color-brand-dim: var(--color-indigo-500/10);
+
+    --color-surface-base: rgba(255, 255, 255, 0.015);
+    --color-surface-hover: rgba(255, 255, 255, 0.05);
+    --color-surface-border: rgba(255, 255, 255, 0.01);
+
+    --color-text-primary: #ffffff;
+    --color-text-secondary: #a1a1aa;
+    --color-text-dim: #71717a;
+}

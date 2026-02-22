@@ -38,13 +38,11 @@
     {/each}
 </svg>
 
-<!-- progress -->
 <div
     class="pointer-events-none absolute top-0 h-full w-0.5 bg-white shadow-lg transition-all"
     style="left: {progress}%"
 ></div>
 
-<!-- on hover -->
 {#if isHovering}
     <div
         class="pointer-events-none absolute top-0 h-full w-0.5 bg-white/50"

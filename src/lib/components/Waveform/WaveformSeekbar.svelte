@@ -2,6 +2,7 @@
     import { uiState } from "$lib/state/player.svelte";
     import { formatTime } from "$lib/utils/format";
     import { useWaveformLoader } from "./useWaveformLoader.svelte";
+    import { fade } from "svelte/transition";
     import LoadingState from "./LoadingState.svelte";
     import FallbackSeekbar from "./FallbackSeekbar.svelte";
     import WaveformVisualization from "./WaveformVisualization.svelte";
@@ -80,11 +81,7 @@
 </script>
 
 <div class="flex justify-center w-full">
-    <div
-        class="relative transition-all duration-300 {uiState.isExpanded
-            ? 'w-full max-w-4xl'
-            : 'w-full max-w-md'}"
-    >
+    <div class="relative transition-all duration-300 w-full">
         <div
             class="transition-all duration-300 {uiState.isExpanded
                 ? 'h-12'
@@ -106,17 +103,31 @@
                 aria-valuenow={currentTime}
             >
                 {#if loader.isLoading}
-                    <LoadingState />
+                    <!-- Fallback seekbar doubles as loading state with a subtle pulse, no need for separate loader -->
+                    <div out:fade={{ duration: 400 }} class="h-full w-full">
+                        <FallbackSeekbar {progress} />
+                    </div>
                 {:else if !loader.waveformData}
-                    <FallbackSeekbar {progress} />
+                    <div
+                        in:fade={{ duration: 400 }}
+                        out:fade={{ duration: 400 }}
+                        class="h-full w-full"
+                    >
+                        <FallbackSeekbar {progress} />
+                    </div>
                 {:else}
-                    <WaveformVisualization
-                        waveformData={loader.waveformData}
-                        {progress}
-                        {isHovering}
-                        {hoverPosition}
-                        {duration}
-                    />
+                    <div
+                        in:fade={{ duration: 600, delay: 100 }}
+                        class="h-full w-full"
+                    >
+                        <WaveformVisualization
+                            waveformData={loader.waveformData}
+                            {progress}
+                            {isHovering}
+                            {hoverPosition}
+                            {duration}
+                        />
+                    </div>
                 {/if}
             </div>
         </div>

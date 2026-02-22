@@ -2,9 +2,13 @@
     import { LoaderCircle, Music } from "@lucide/svelte";
     import { invoke } from "@tauri-apps/api/core";
     import { onMount } from "svelte";
+    import { getDominantColor } from "$lib/utils/color";
+    import { playbackState } from "$lib/state/player.svelte";
+    import { monochromeService } from "$lib/services/monochrome";
 
     interface Props {
         trackId: string;
+        imageHash?: string | null;
         alt?: string;
         class?: string;
         isExpanded: boolean;
@@ -12,6 +16,7 @@
 
     let {
         trackId,
+        imageHash = null,
         alt = "Album cover",
         class: className = "",
         isExpanded,
@@ -32,7 +37,6 @@
         loadThumbnail();
     });
 
-    // load high res when expanded
     $effect(() => {
         if (isExpanded && !fullResUrl && !isLoadingFullRes) {
             loadFullRes();
@@ -46,17 +50,64 @@
         hasError = false;
 
         try {
-            const base64Data = await invoke<string | null>("get_cover_art", {
-                id: trackId,
-                size: 128,
-            });
+            if (imageHash) {
+                let url: string;
+                if (imageHash.startsWith("online-cover:")) {
+                    const onlineId = parseInt(imageHash.split(":")[1]);
+                    const fetchedUrl = await monochromeService.getCoverUrl(
+                        onlineId,
+                        128,
+                    );
+                    if (fetchedUrl) {
+                        url = fetchedUrl;
+                    } else {
+                        hasError = true;
+                        isLoadingThumbnail = false;
+                        return;
+                    }
+                } else {
+                    url = imageHash.startsWith("http")
+                        ? imageHash
+                        : `library-asset://localhost/${imageHash}/128`;
+                }
 
-            if (base64Data) {
-                thumbnailUrl = `data:image/jpeg;base64,${base64Data}`;
+                thumbnailUrl = url;
+
+                getDominantColor(url).then((color) => {
+                    if (playbackState.currentTrackId === trackId) {
+                        playbackState.dominantColor = color;
+                    }
+                });
+            } else {
+                const base64Data = await invoke<string | null>(
+                    "get_cover_art",
+                    {
+                        id: trackId,
+                        size: 128,
+                    },
+                );
+
+                if (base64Data) {
+                    const url = `data:image/jpeg;base64,${base64Data}`;
+                    thumbnailUrl = url;
+
+                    getDominantColor(url).then((color) => {
+                        if (playbackState.currentTrackId === trackId) {
+                            playbackState.dominantColor = color;
+                        }
+                    });
+                } else {
+                    if (playbackState.currentTrackId === trackId) {
+                        playbackState.dominantColor = null;
+                    }
+                }
             }
         } catch (e) {
             console.error("Failed to load thumbnail:", e);
             hasError = true;
+            if (playbackState.currentTrackId === trackId) {
+                playbackState.dominantColor = null;
+            }
         } finally {
             isLoadingThumbnail = false;
         }
@@ -68,13 +119,36 @@
         isLoadingFullRes = true;
 
         try {
-            const base64Data = await invoke<string | null>("get_cover_art", {
-                id: trackId,
-                size: 1024,
-            });
+            if (imageHash) {
+                if (imageHash.startsWith("online-cover:")) {
+                    const onlineId = parseInt(imageHash.split(":")[1]);
+                    const fetchedUrl = await monochromeService.getCoverUrl(
+                        onlineId,
+                        1024,
+                    );
+                    if (fetchedUrl) {
+                        fullResUrl = fetchedUrl;
+                    } else {
+                        isLoadingFullRes = false;
+                        return;
+                    }
+                } else {
+                    fullResUrl = imageHash.startsWith("http")
+                        ? imageHash
+                        : `library-asset://localhost/${imageHash}/1024`;
+                }
+            } else {
+                const base64Data = await invoke<string | null>(
+                    "get_cover_art",
+                    {
+                        id: trackId,
+                        size: 1024,
+                    },
+                );
 
-            if (base64Data) {
-                fullResUrl = `data:image/jpeg;base64,${base64Data}`;
+                if (base64Data) {
+                    fullResUrl = `data:image/jpeg;base64,${base64Data}`;
+                }
             }
         } catch (e) {
             console.error("Failed to load full-res cover art:", e);

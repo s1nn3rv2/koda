@@ -5,9 +5,10 @@
 
     const ANIMATION_DURATION = 250;
 
-    let { isPlaying, onclick } = $props<{
+    let { isPlaying, onclick, class: className = "bg-white text-slate-900 w-12 h-12 shadow-lg hover:bg-white/90" } = $props<{
         isPlaying: boolean;
-        onclick: () => void;
+        onclick: (e: MouseEvent) => void;
+        class?: string;
     }>();
 
     // copied from god knows even where
@@ -37,11 +38,11 @@
 </script>
 
 <button
-    class="rounded-full bg-white w-12 h-12 text-slate-900 shadow-lg transition hover:scale-105 hover:bg-white/90 flex items-center justify-center"
+    class="rounded-full flex items-center justify-center transition hover:scale-105 cursor-pointer {className}"
     {onclick}
     aria-label={isPlaying ? "Pause" : "Play"}
 >
-    <svg viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8">
+    <svg viewBox="0 0 24 24" fill="currentColor" class="w-2/3 h-2/3">
         <path d={pathLeft.current} />
         <path d={pathRight.current} />
     </svg>

@@ -1,0 +1,75 @@
+[[permission]]
+identifier = "allow-library-commands"
+description = "Allows access to all library management commands"
+commands.allow = [
+    "scan_and_save_library",
+    "get_all_tracks",
+    "get_random_track",
+    "get_track_by_id",
+    "search_tracks",
+    "delete_track",
+    "delete_track_file",
+    "clear_library",
+    "get_library_stats",
+    "update_track_metadata",
+    "get_cover_art",
+    "get_image_by_hash",
+    "get_all_artists",
+    "get_tracks_by_artist",
+    "get_all_albums",
+    "get_tracks_by_album",
+    "get_albums_by_artist",
+    "get_albums_by_genre",
+    "get_all_genres",
+    "get_tracks_by_genre",
+    "get_artist_by_name",
+    "get_album_details",
+    "get_tracks_page",
+    "search_tracks_paginated",
+    "get_tracks_by_artist_page",
+    "get_tracks_by_album_page",
+    "get_tracks_by_genre_page",
+    "download_track",
+    "import_downloaded_track",
+    "write_file_bytes",
+    "get_subdirectories"
+]
+
+[[permission]]
+identifier = "allow-metadata-commands"
+description = "Allows access to external metadata fetching commands"
+commands.allow = [
+    "fetch_artist_metadata",
+    "fetch_album_metadata"
+]
+
+[[permission]]
+identifier = "allow-player-commands"
+description = "Allows access to music player control commands"
+commands.allow = [
+    "play_file",
+    "get_current_track",
+    "pause",
+    "resume",
+    "stop",
+    "set_volume",
+    "seek",
+    "get_position"
+]
+
+[[permission]]
+identifier = "allow-waveform-commands"
+description = "Allows access to waveform generation commands"
+commands.allow = [
+    "get_waveform"
+]
+
+[[set]]
+identifier = "allow-app-commands"
+description = "Permissions granted to the main window by default"
+permissions = [
+    "allow-library-commands",
+    "allow-metadata-commands",
+    "allow-player-commands",
+    "allow-waveform-commands"
+]

@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use tauri::State;
 
 use super::generator;
@@ -8,8 +9,8 @@ use crate::database::TrackRepository;
 #[tauri::command]
 pub async fn get_waveform(
     id: String,
-    db: State<'_, TrackRepository>,
-    cache_manager: State<'_, CacheManager>,
+    db: State<'_, Arc<TrackRepository>>,
+    cache_manager: State<'_, Arc<CacheManager>>,
 ) -> Result<super::models::WaveformData, String> {
     let track = db
         .get_by_id(&id)

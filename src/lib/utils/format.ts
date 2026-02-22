@@ -19,3 +19,18 @@ export function pluralize(
   if (count === 1) return singular;
   return plural || `${singular}s`;
 }
+
+export function formatDate(dateStr: string | null | undefined): string | null {
+  if (!dateStr) return null;
+
+  if (dateStr.includes("-")) {
+    const parts = dateStr.split("-");
+    if (parts.length === 3) {
+      const [year, month, day] = parts;
+      return `${day}-${month}-${year}`;
+    }
+    return dateStr;
+  }
+
+  return dateStr;
+}
