@@ -43,14 +43,14 @@ pub async fn play_file(
     .map_err(|e| format!("Task failed: {}", e))??;
     println!("Track decoded successfully. Updating player state...");
 
-    let mut state = player.inner.lock().map_err(|e| e.to_string())?;
+    let mut state = player.inner.lock().map_err(|e: std::sync::PoisonError<_>| e.to_string())?;
 
     if let Some(old_sink) = state.sink.take() {
         old_sink.clear();
         drop(old_sink);
     }
 
-    let sink = Sink::connect_new(&player.stream.mixer());
+    let sink = Sink::connect_new(&player.mixer);
     match source {
         PlaySource::Url(s) => sink.append(s),
         PlaySource::File(s) => sink.append(s),
@@ -67,7 +67,7 @@ pub async fn play_file(
 
 #[command]
 pub fn set_volume(volume: f32, player: State<PlayerState>) -> Result<(), String> {
-    let state = player.inner.lock().map_err(|e| e.to_string())?;
+    let state = player.inner.lock().map_err(|e: std::sync::PoisonError<_>| e.to_string())?;
 
     if let Some(ref sink) = state.sink {
         sink.set_volume(volume);
@@ -78,13 +78,13 @@ pub fn set_volume(volume: f32, player: State<PlayerState>) -> Result<(), String>
 
 #[command]
 pub fn get_current_track(player: State<PlayerState>) -> Result<Option<CurrentTrack>, String> {
-    let state = player.inner.lock().map_err(|e| e.to_string())?;
+    let state = player.inner.lock().map_err(|e: std::sync::PoisonError<_>| e.to_string())?;
     Ok(state.current_track.clone())
 }
 
 #[command]
 pub fn pause(player: State<PlayerState>) -> Result<(), String> {
-    let mut state = player.inner.lock().map_err(|e| e.to_string())?;
+    let mut state = player.inner.lock().map_err(|e: std::sync::PoisonError<_>| e.to_string())?;
 
     if let Some(ref sink) = state.sink {
         sink.pause();
@@ -96,7 +96,7 @@ pub fn pause(player: State<PlayerState>) -> Result<(), String> {
 
 #[command]
 pub fn resume(player: State<PlayerState>) -> Result<(), String> {
-    let mut state = player.inner.lock().map_err(|e| e.to_string())?;
+    let mut state = player.inner.lock().map_err(|e: std::sync::PoisonError<_>| e.to_string())?;
 
     if let Some(ref sink) = state.sink {
         sink.play();
@@ -108,7 +108,7 @@ pub fn resume(player: State<PlayerState>) -> Result<(), String> {
 
 #[command]
 pub fn stop(player: State<PlayerState>) -> Result<(), String> {
-    let mut state = player.inner.lock().map_err(|e| e.to_string())?;
+    let mut state = player.inner.lock().map_err(|e: std::sync::PoisonError<_>| e.to_string())?;
 
     if let Some(sink) = state.sink.take() {
         sink.stop();
@@ -124,8 +124,8 @@ pub async fn seek(position: f64, player: State<'_, PlayerState>) -> Result<(), S
     let duration = Duration::from_secs_f64(position);
 
     let (was_paused, needs_reload, track_data, source_url) = {
-        let state = player.inner.lock().map_err(|e| e.to_string())?;
-        let needs_reload = state.sink.as_ref().map_or(false, |s| s.empty());
+        let state = player.inner.lock().map_err(|e: std::sync::PoisonError<_>| e.to_string())?;
+        let needs_reload = state.sink.as_ref().map_or(false, |s: &Sink| s.empty());
         let was_paused = state.is_paused;
         let track_data = state.current_track.clone();
         let source_url = state.source_url.clone();
@@ -138,7 +138,7 @@ pub async fn seek(position: f64, player: State<'_, PlayerState>) -> Result<(), S
         play_file(reload_path, Some(track), player.clone()).await?;
     }
 
-    let mut state = player.inner.lock().map_err(|e| e.to_string())?;
+    let mut state = player.inner.lock().map_err(|e: std::sync::PoisonError<_>| e.to_string())?;
 
     if state.sink.is_none() {
         return Ok(());
@@ -164,6 +164,6 @@ pub async fn seek(position: f64, player: State<'_, PlayerState>) -> Result<(), S
 
 #[command]
 pub fn get_position(player: State<PlayerState>) -> Result<f64, String> {
-    let state = player.inner.lock().map_err(|e| e.to_string())?;
+    let state = player.inner.lock().map_err(|e: std::sync::PoisonError<_>| e.to_string())?;
     Ok(state.position())
 }

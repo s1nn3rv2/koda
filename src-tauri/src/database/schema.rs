@@ -25,7 +25,7 @@ pub fn initialize_schema(conn: &Connection) -> SqliteResult<()> {
     Ok(())
 }
 
-fn migrate(conn: &Connection, from_version: i32) -> SqliteResult<()> {
+fn migrate(_conn: &Connection, _from_version: i32) -> SqliteResult<()> {
     Ok(())
 }
 

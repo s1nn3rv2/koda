@@ -88,7 +88,12 @@ pub fn run() {
             app.manage(cache_manager);
             app.manage(mb_client);
 
-            let player = music_player::PlayerState::default();
+            let stream = rodio::OutputStreamBuilder::open_default_stream()
+                .expect("Failed to initialize audio output");
+            let stream: &'static _ = Box::leak(Box::new(stream));
+            let mixer = stream.mixer();
+
+            let player = music_player::PlayerState::new(mixer);
             app.manage(player);
 
             Ok(())

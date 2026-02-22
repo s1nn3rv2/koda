@@ -130,7 +130,7 @@ pub async fn import_downloaded_track(
     };
 
     let album_name = metadata.album.as_ref().filter(|s| !s.trim().is_empty());
-    let has_album = album_name.is_some();
+    let _has_album = album_name.is_some();
 
     if let Some(ref t) = metadata.title { tag.set_title(t.clone()); }
     if let Some(ref a) = metadata.artists { tag.set_artist(a.clone()); }
