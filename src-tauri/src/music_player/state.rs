@@ -1,6 +1,6 @@
 use std::{sync::Mutex, time::Instant};
 
-use rodio::{OutputStream, Sink};
+use rodio::Sink;
 use serde::{Deserialize, Serialize};
 
 use crate::database::Track;
@@ -28,7 +28,7 @@ impl From<Track> for CurrentTrack {
     }
 }
 
-pub(super) struct PlayerInnerState {
+pub(crate) struct PlayerInnerState {
     pub sink: Option<Sink>,
     pub current_track: Option<CurrentTrack>,
     pub source_url: Option<String>,
@@ -104,26 +104,18 @@ impl PlayerInnerState {
     }
 }
 
-// audio stream is created once at startup and lives for the entire app lifetime
+// audio stream is created once at startup and lives for the entire app lifetime.
+// mixer because stream is !Send on macos
 pub struct PlayerState {
-    pub(super) stream: OutputStream,
-    pub(super) inner: Mutex<PlayerInnerState>,
+    pub mixer: &'static rodio::mixer::Mixer,
+    pub inner: Mutex<PlayerInnerState>,
 }
 
 impl PlayerState {
-    pub fn new() -> Result<Self, String> {
-        let stream = rodio::OutputStreamBuilder::open_default_stream()
-            .map_err(|e| format!("Failed to initialize audio output: {}", e))?;
-
-        Ok(Self {
-            stream,
+    pub fn new(mixer: &'static rodio::mixer::Mixer) -> Self {
+        Self {
+            mixer,
             inner: Mutex::new(PlayerInnerState::default()),
-        })
-    }
-}
-
-impl Default for PlayerState {
-    fn default() -> Self {
-        Self::new().expect("Failed to initialize audio player")
+        }
     }
 }
