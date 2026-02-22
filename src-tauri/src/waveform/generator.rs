@@ -11,8 +11,7 @@ use symphonia::core::probe::Hint;
 use symphonia::core::sample::Sample;
 
 use super::models::WaveformData;
-
-const WAVEFORM_POINTS: usize = 600;
+use crate::settings::waveform::WAVEFORM_POINTS;
 
 pub fn generate(audio_path: &str) -> Result<WaveformData, String> {
     let file = File::open(audio_path).map_err(|e| format!("Failed to open file: {}", e))?;

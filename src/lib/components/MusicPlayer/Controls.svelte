@@ -1,40 +1,44 @@
 <script lang="ts">
-    import { playerState, uiState } from "$lib/state/player.svelte";
+    import {
+        playbackState,
+        queueState,
+        uiState,
+    } from "$lib/state/player.svelte";
     import { SkipBack, SkipForward } from "@lucide/svelte";
     import PlayPauseButton from "./PlayPauseButton.svelte";
     import WaveformSeekbar from "$lib/components/Waveform/WaveformSeekbar.svelte";
 
     function handleSeek(time: number) {
-        playerState.seek(time);
+        playbackState.seek(time);
     }
 </script>
 
 <div
-    class="flex w-full transition-all duration-300 {uiState.isExpanded
-        ? 'flex-col items-center gap-2'
+    class="flex w-full max-w-4xl mx-auto transition-all duration-300 {uiState.isExpanded
+        ? 'flex-col sm:flex-row items-center gap-2 sm:gap-6'
         : 'items-center gap-3'}"
 >
     <div
         class="flex items-center gap-2 transition-all duration-300 {uiState.isExpanded
-            ? 'justify-center'
+            ? 'justify-center sm:flex-shrink-0'
             : 'flex-shrink-0'}"
     >
         <button
-            class="rounded-full p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white"
-            onclick={() => playerState.prevTrack()}
+            class="rounded-full p-1.5 text-text-secondary transition hover:bg-surface-hover hover:text-text-primary"
+            onclick={() => queueState.prevTrack()}
             aria-label="Previous track"
         >
             <SkipBack size={16} fill="currentColor" />
         </button>
 
         <PlayPauseButton
-            isPlaying={playerState.isActuallyPlaying}
-            onclick={() => playerState.togglePlayPause()}
+            isPlaying={playbackState.isActuallyPlaying}
+            onclick={() => playbackState.togglePlayPause()}
         />
 
         <button
-            class="rounded-full p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white"
-            onclick={() => playerState.nextTrack()}
+            class="rounded-full p-1.5 text-text-secondary transition hover:bg-surface-hover hover:text-text-primary"
+            onclick={() => queueState.nextTrack()}
             aria-label="Next track"
         >
             <SkipForward size={16} fill="currentColor" />
@@ -43,20 +47,20 @@
 
     <div
         class="flex items-center transition-all duration-300 {uiState.isExpanded
-            ? 'w-full'
+            ? 'w-full sm:flex-1'
             : 'flex-1'}"
     >
         <WaveformSeekbar
-            trackId={playerState.currentTrackId}
-            currentTime={playerState.currentPosition}
-            duration={playerState.currentTrack?.duration || 0}
+            trackId={playbackState.currentTrackId}
+            currentTime={playbackState.currentPosition}
+            duration={playbackState.currentTrack?.duration || 0}
             onSeek={handleSeek}
         />
     </div>
 
-    {#if playerState.errorMsg}
+    {#if playbackState.errorMsg}
         <p class="absolute mt-14 text-sm text-red-400">
-            {playerState.errorMsg}
+            {playbackState.errorMsg}
         </p>
     {/if}
 </div>

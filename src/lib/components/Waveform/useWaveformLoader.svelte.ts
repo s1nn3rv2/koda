@@ -21,6 +21,13 @@ export function useWaveformLoader(getTrackId: () => string | null | undefined) {
     state.isLoading = true;
     state.hasError = false;
 
+    if (id.startsWith("online:")) {
+      state.waveformData = null;
+      state.isLoading = false;
+      state.hasError = true;
+      return;
+    }
+
     try {
       const data: WaveformData = await invoke("get_waveform", { id });
 

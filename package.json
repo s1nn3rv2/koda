@@ -1,6 +1,6 @@
 {
   "name": "koda",
-  "version": "0.1.0",
+  "version": "0.9.0",
   "description": "",
   "type": "module",
   "scripts": {
@@ -9,13 +9,16 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "tauri:dev": "WEBKIT_DISABLE_DMABUF_RENDERER=1 tauri dev",
+    "tauri:build": "APPIMAGE_EXTRACT_AND_RUN=1 NO_STRIP=true tauri build"
   },
   "license": "MIT",
   "dependencies": {
     "@lucide/svelte": "^0.564.0",
     "@tailwindcss/vite": "^4.1.18",
     "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-dialog": "~2.6.0",
     "@tauri-apps/plugin-fs": "~2.4.5",
     "@tauri-apps/plugin-opener": "^2",
     "flubber": "^0.4.2",

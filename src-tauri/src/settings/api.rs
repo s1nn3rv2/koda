@@ -1,0 +1,4 @@
+pub const ITUNES_HIGH_RES_COVER_TARGET: &str = "1000x1000bb";
+pub const ITUNES_LOW_RES_COVER_SOURCE: &str = "100x100bb";
+
+pub const ITUNES_OG_IMAGE_DIMENSION_SOURCE: &str = "1200x630";

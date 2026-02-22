@@ -1,11 +1,10 @@
 use std::fs;
 use std::path::PathBuf;
 
+use crate::settings::cache::THUMB_SIZE;
 use image::codecs::jpeg::JpegEncoder;
 use image::imageops::FilterType;
 use sha2::{Digest, Sha256};
-
-const THUMB_SIZE: u32 = 128;
 
 pub struct CoverArtCache {
     cache_dir: PathBuf,
@@ -23,12 +22,12 @@ impl CoverArtCache {
         format!("{:x}", hasher.finalize())
     }
 
-    fn get_thumbnail_path(&self, hash: &str) -> PathBuf {
-        self.cache_dir.join(format!("{}_128.jpg", hash))
+    fn get_main_thumb_path(&self, hash: &str) -> PathBuf {
+        self.cache_dir.join(format!("{}_thumb.jpg", hash))
     }
 
     pub fn save_thumbnail_with_hash(&self, data: &[u8], hash: &str) -> Result<(), String> {
-        let thumb_path = self.get_thumbnail_path(hash);
+        let thumb_path = self.get_main_thumb_path(hash);
 
         if thumb_path.exists() {
             return Ok(());
@@ -47,20 +46,53 @@ impl CoverArtCache {
         data: Option<&[u8]>,
         size: Option<u32>,
     ) -> Result<Vec<u8>, String> {
-        let requested_size = size.unwrap_or(THUMB_SIZE);
-
-        if requested_size == THUMB_SIZE {
-            let thumb_path = self.get_thumbnail_path(hash);
-            return fs::read(&thumb_path).map_err(|e| format!("Failed to read thumbnail: {}", e));
+        let main_path = self.get_main_thumb_path(hash);
+        if main_path.exists() {
+            return fs::read(&main_path)
+                .map_err(|e| format!("Failed to read main thumbnail: {}", e));
         }
 
-        // for any size > 128, generate on-demand from original data
-        let original_data = data.ok_or("Original cover data required for non-thumbnail sizes")?;
-        resize_image(original_data, requested_size)
+        let old_path = self.cache_dir.join(format!("{}_128.jpg", hash));
+        if old_path.exists() {
+            return fs::read(&old_path).map_err(|e| format!("Failed to read old thumbnail: {}", e));
+        }
+
+        if let Some(s) = size {
+            let size_path = self.cache_dir.join(format!("{}_{}.jpg", hash, s));
+            if size_path.exists() {
+                return fs::read(&size_path)
+                    .map_err(|e| format!("Failed to read sized thumbnail: {}", e));
+            }
+        }
+
+        if let Some(original_data) = data {
+            let requested_size = size.unwrap_or(THUMB_SIZE);
+            return resize_image(original_data, requested_size);
+        }
+
+        Err("Cover art not found and original data missing".to_string())
     }
 
     pub fn has_thumbnail(&self, hash: &str) -> bool {
-        self.get_thumbnail_path(hash).exists()
+        self.get_main_thumb_path(hash).exists()
+            || self.cache_dir.join(format!("{}_128.jpg", hash)).exists()
+    }
+
+    #[allow(dead_code)]
+    pub async fn save_external_image(&self, url: &str) -> Result<String, String> {
+        let response = reqwest::get(url)
+            .await
+            .map_err(|e| format!("Failed to download image: {}", e))?;
+
+        let bytes = response
+            .bytes()
+            .await
+            .map_err(|e| format!("Failed to get image bytes: {}", e))?;
+
+        let hash = self.hash_cover_data(&bytes);
+        self.save_thumbnail_with_hash(&bytes, &hash)?;
+
+        Ok(hash)
     }
 }
 
@@ -76,15 +108,17 @@ fn resize_image(data: &[u8], size: u32) -> Result<Vec<u8>, String> {
 
     let thumbnail = img.resize_to_fill(size, size, FilterType::CatmullRom);
 
+    let rgb_img = thumbnail.to_rgb8();
+
     let mut buffer = Vec::new();
     let mut cursor = Cursor::new(&mut buffer);
-    let mut encoder = JpegEncoder::new_with_quality(&mut cursor, 80);
+    let mut encoder = JpegEncoder::new_with_quality(&mut cursor, 90);
     encoder
         .encode(
-            thumbnail.as_bytes(),
-            thumbnail.width(),
-            thumbnail.height(),
-            thumbnail.color().into(),
+            &rgb_img,
+            rgb_img.width(),
+            rgb_img.height(),
+            image::ExtendedColorType::Rgb8,
         )
         .map_err(|e| format!("Failed to encode thumbnail: {}", e))?;
 
