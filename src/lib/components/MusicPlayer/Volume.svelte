@@ -17,6 +17,24 @@
     function toggleMute() {
         playbackState.toggleMute();
     }
+
+    function handleInput() {
+        if (playbackState.isMuted && playbackState.volume > 0) {
+            playbackState.isMuted = false;
+        }
+        playbackState.syncVolume();
+    }
+
+    function handleWheel(event: WheelEvent) {
+        event.preventDefault();
+        const step = 0.05;
+
+        if (event.deltaY < 0) {
+            playbackState.volume = Math.min(1, playbackState.volume + step);
+        } else {
+            playbackState.volume = Math.max(0, playbackState.volume - step);
+        }
+    }
 </script>
 
 <div
@@ -44,12 +62,8 @@
             max="1"
             step="0.01"
             bind:value={playbackState.volume}
-            oninput={() => {
-                if (playbackState.isMuted && playbackState.volume > 0) {
-                    playbackState.isMuted = false;
-                }
-                playbackState.syncVolume();
-            }}
+            oninput={handleInput}
+            onwheel={handleWheel}
             class="cursor-pointer appearance-none rounded-lg bg-white/10 accent-brand-secondary transition-all duration-300
             {uiState.isExpanded ? 'w-1 h-32' : 'h-1 w-20'}"
             style={uiState.isExpanded
