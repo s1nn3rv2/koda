@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { uiState } from "$lib/state/player.svelte";
+    // TODO: fix this function mess
+    import { playbackState, uiState } from "$lib/state/player.svelte";
     import { formatTime } from "$lib/utils/format";
     import { useWaveformLoader } from "./useWaveformLoader.svelte";
     import { fade } from "svelte/transition";
-    import LoadingState from "./LoadingState.svelte";
     import FallbackSeekbar from "./FallbackSeekbar.svelte";
     import WaveformVisualization from "./WaveformVisualization.svelte";
 
@@ -22,60 +22,136 @@
     let isHovering = $state(false);
     let hoverPosition = $state(0);
 
-    const progress = $derived(
-        duration > 0 ? (currentTime / duration) * 100 : 0,
+    let isDragging = $state(false);
+    let isScrubbing = $state(false);
+    let scrubTime = $state(0);
+    let scrubTimeout: ReturnType<typeof setTimeout>;
+
+    let isLocked = $state(false);
+    let uiLockTimeout: ReturnType<typeof setTimeout>;
+
+    const displayTime = $derived(
+        isDragging || isScrubbing || isLocked ? scrubTime : currentTime,
     );
 
-    function handleClick(event: MouseEvent) {
-        if (!containerElement || !duration) return;
-
-        const rect = containerElement.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const percentage = x / rect.width;
-        const seekTime = percentage * duration;
-
-        if (onSeek) {
-            onSeek(seekTime);
+    function startSeeking() {
+        if (!isDragging && !isScrubbing && !isLocked) {
+            scrubTime = currentTime;
         }
+        isLocked = true;
+        clearTimeout(uiLockTimeout);
     }
 
-    function handleMouseMove(event: MouseEvent) {
+    function stopSeeking(finalTime: number) {
+        if (onSeek) onSeek(finalTime);
+
+        clearTimeout(uiLockTimeout);
+        uiLockTimeout = setTimeout(() => {
+            isLocked = false;
+            isScrubbing = false;
+            isDragging = false;
+        }, 500);
+    }
+
+    function applyScrubChange(newTime: number) {
+        startSeeking();
+        isScrubbing = true;
+        scrubTime = Math.max(0, Math.min(duration, newTime));
+
+        clearTimeout(scrubTimeout);
+        scrubTimeout = setTimeout(() => {
+            stopSeeking(scrubTime);
+        }, 150);
+    }
+
+    const progress = $derived(
+        duration > 0 ? (displayTime / duration) * 100 : 0,
+    );
+
+    function handlePointerDown(event: PointerEvent) {
+        if (!containerElement || !duration || event.button !== 0) return;
+
+        containerElement.setPointerCapture(event.pointerId);
+        startSeeking();
+        isDragging = true;
+
+        if (scrubTimeout) {
+            clearTimeout(scrubTimeout);
+            isScrubbing = false;
+        }
+
+        const rect = containerElement.getBoundingClientRect();
+        const percentage = Math.max(
+            0,
+            Math.min(1, (event.clientX - rect.left) / rect.width),
+        );
+        scrubTime = percentage * duration;
+    }
+
+    function handlePointerMove(event: PointerEvent) {
         if (!containerElement) return;
 
         const rect = containerElement.getBoundingClientRect();
         const x = event.clientX - rect.left;
-        hoverPosition = (x / rect.width) * 100;
+        const percentage = Math.max(0, Math.min(1, x / rect.width));
+
+        hoverPosition = percentage * 100;
+
+        if (isDragging && duration) {
+            scrubTime = percentage * duration;
+        }
+    }
+
+    function handlePointerUp(event: PointerEvent) {
+        if (!isDragging) return;
+
+        containerElement?.releasePointerCapture(event.pointerId);
+        stopSeeking(scrubTime);
+    }
+
+    function handleWheel(event: WheelEvent) {
+        event.preventDefault();
+        if (!duration) return;
+
+        const timeChange = -(event.deltaY * 0.0002 * duration);
+        applyScrubChange(
+            (isScrubbing || isDragging || isLocked ? scrubTime : currentTime) +
+                timeChange,
+        );
     }
 
     function handleKeyDown(event: KeyboardEvent) {
         if (!containerElement || !duration) return;
 
-        let seekTime = currentTime;
-        const step = duration * 0.05; // 5% of duration per keystroke
+        const stepMulti = event.repeat ? 0.005 : 0.05;
+        const baseTime =
+            isScrubbing || isDragging || isLocked ? scrubTime : currentTime;
 
         switch (event.key) {
+            case "ArrowDown":
             case "ArrowLeft":
-                seekTime = Math.max(0, currentTime - step);
                 event.preventDefault();
+                applyScrubChange(baseTime - duration * stepMulti);
                 break;
+            case "ArrowUp":
             case "ArrowRight":
-                seekTime = Math.min(duration, currentTime + step);
                 event.preventDefault();
+                applyScrubChange(baseTime + duration * stepMulti);
                 break;
             case "Home":
-                seekTime = 0;
                 event.preventDefault();
+                applyScrubChange(0);
                 break;
             case "End":
-                seekTime = duration;
                 event.preventDefault();
+                applyScrubChange(duration);
+                break;
+            case " ":
+                event.preventDefault();
+                playbackState.togglePlayPause();
                 break;
             default:
                 return;
-        }
-
-        if (onSeek) {
-            onSeek(seekTime);
         }
     }
 </script>
@@ -90,20 +166,22 @@
             <div
                 bind:this={containerElement}
                 class="relative h-full w-full cursor-pointer select-none overflow-hidden rounded bg-white/5 transition-all duration-300"
-                onclick={handleClick}
+                onpointerdown={handlePointerDown}
+                onpointermove={handlePointerMove}
+                onpointerup={handlePointerUp}
+                onpointercancel={handlePointerUp}
                 onkeydown={handleKeyDown}
                 onmouseenter={() => (isHovering = true)}
                 onmouseleave={() => (isHovering = false)}
-                onmousemove={handleMouseMove}
+                onwheel={handleWheel}
                 role="slider"
                 tabindex="0"
                 aria-label="Seek bar"
                 aria-valuemin={0}
                 aria-valuemax={duration}
-                aria-valuenow={currentTime}
+                aria-valuenow={displayTime}
             >
                 {#if loader.isLoading}
-                    <!-- Fallback seekbar doubles as loading state with a subtle pulse, no need for separate loader -->
                     <div out:fade={{ duration: 400 }} class="h-full w-full">
                         <FallbackSeekbar {progress} />
                     </div>
@@ -123,7 +201,7 @@
                         <WaveformVisualization
                             waveformData={loader.waveformData}
                             {progress}
-                            {isHovering}
+                            isHovering={isHovering || isDragging || isLocked}
                             {hoverPosition}
                             {duration}
                         />
@@ -135,7 +213,7 @@
         <div
             class="absolute top-full mt-1 w-full flex justify-between text-[10px] text-white/40"
         >
-            <span>{formatTime(currentTime)}</span>
+            <span>{formatTime(displayTime)}</span>
             <span>{formatTime(duration)}</span>
         </div>
     </div>
