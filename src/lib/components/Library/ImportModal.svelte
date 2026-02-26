@@ -16,7 +16,7 @@
         ChevronDown,
     } from "@lucide/svelte";
     import { fade, scale } from "svelte/transition";
-    import { invoke } from "@tauri-apps/api/core";
+    import { TauriService } from "$lib/utils/tauri";
     import { libraryState } from "$lib/state/library.svelte";
 
     let dl = $derived(downloadState.trackToImport);
@@ -37,7 +37,7 @@
     let error = $state("");
 
     const inputClass =
-        "w-full px-4 py-2.5 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-all";
+        "w-full px-4 py-2.5 bg-white/3 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-all";
     const labelClass =
         "flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1";
 
@@ -50,10 +50,7 @@
             expandedPaths = new Set(expandedPaths);
             if (!treeData[path]) {
                 try {
-                    treeData[path] = await invoke<string[]>(
-                        "get_subdirectories",
-                        { path },
-                    );
+                    treeData[path] = await TauriService.getSubdirectories(path);
                 } catch (e) {
                     console.error("Failed to load subfolders", e);
                 }
@@ -106,10 +103,10 @@
         isImporting = true;
         error = "";
         try {
-            await invoke("import_downloaded_track", {
-                tempPath: dl.tempPath,
+            await TauriService.importDownloadedTrack(
+                dl.tempPath,
                 targetFolder,
-                metadata: {
+                {
                     title,
                     artists,
                     album,
@@ -120,7 +117,7 @@
                     release_date: releaseDate,
                     cover_url: dl.coverUrl,
                 },
-            });
+            );
             settingsState.lastImportGenre = genre;
             settingsState.lastImportFolder = targetFolder;
             downloadState.clearFinished(dl.id);
@@ -199,11 +196,11 @@
             transition:scale={{ duration: 300, start: 0.95 }}
         >
             <div
-                class="px-8 py-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]"
+                class="px-8 py-6 border-b border-white/5 flex items-center justify-between bg-white/2"
             >
                 <div class="flex items-center gap-4">
                     <div
-                        class="w-12 h-12 bg-green-500/10 rounded-2xl flex items-center justify-center border border-green-500/20 text-green-400"
+                        class="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 text-gray-300"
                     >
                         <Save size={24} />
                     </div>
@@ -248,7 +245,7 @@
                                 expandedPaths = new Set(expandedPaths);
                                 void toggleFolder(rootPath);
                             }}
-                            class="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-2xl text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-all appearance-none cursor-pointer"
+                            class="w-full px-4 py-3 bg-white/3 border border-white/10 rounded-2xl text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-all appearance-none cursor-pointer"
                         >
                             {#each settingsState.musicPaths as path}
                                 <option value={path}>{path}</option>
@@ -256,10 +253,10 @@
                         </select>
 
                         <div
-                            class="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden"
+                            class="bg-white/2 border border-white/5 rounded-2xl overflow-hidden"
                         >
                             <div
-                                class="px-4 py-2 bg-white/[0.03] border-b border-white/5 items-center justify-between hidden md:flex"
+                                class="px-4 py-2 bg-white/3 border-b border-white/5 items-center justify-between hidden md:flex"
                             >
                                 <span
                                     class="text-[10px] font-mono text-gray-500 truncate mr-2"
@@ -300,7 +297,7 @@
                                 onclick={() => (targetFolder = path)}
                                 class="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-xl text-left text-[13px] transition-all {isSelected
                                     ? 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/20'
-                                    : 'text-gray-400 hover:bg-white/[0.04] hover:text-white border border-transparent'}"
+                                    : 'text-gray-400 hover:bg-white/4 hover:text-white border border-transparent'}"
                             >
                                 <Folder
                                     size={15}
@@ -387,7 +384,7 @@
             </div>
 
             <div
-                class="px-8 py-5 border-t border-white/5 bg-white/[0.01] flex items-center justify-end gap-4"
+                class="px-8 py-5 border-t border-white/5 bg-white/1 flex items-center justify-end gap-4"
             >
                 <button
                     onclick={cancel}
@@ -397,7 +394,7 @@
                 <button
                     onclick={handleImport}
                     disabled={isImporting || !targetFolder}
-                    class="flex items-center gap-2 px-8 py-2.5 bg-green-500 hover:bg-green-400 disabled:opacity-50 text-black text-sm font-bold rounded-xl transition-all shadow-lg shadow-green-500/20 active:scale-95"
+                    class="flex items-center gap-2 px-8 py-2.5 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 border border-indigo-500/30 disabled:opacity-50 text-sm font-bold rounded-xl transition-all active:scale-95"
                 >
                     {#if isImporting}
                         <div
@@ -405,7 +402,7 @@
                         ></div>
                         Importing...
                     {:else}
-                        <Check size={18} /> Add to Library
+                        Add to Library
                     {/if}
                 </button>
             </div>

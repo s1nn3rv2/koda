@@ -1,6 +1,6 @@
 <script lang="ts">
     import { libraryState } from "$lib/state/library.svelte";
-    import { invoke } from "@tauri-apps/api/core";
+    import { TauriService } from "$lib/utils/tauri";
     import {
         X,
         Save,
@@ -49,8 +49,7 @@
         if (!track) return;
         isSaving = true;
         try {
-            await invoke("update_track_metadata", {
-                trackId: track.id,
+            await TauriService.updateTrackMetadata(track.id, {
                 title: title || null,
                 artists: artists || null,
                 album: album || null,

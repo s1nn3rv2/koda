@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Library, ListMusic, Globe } from "@lucide/svelte";
-    import { invoke } from "@tauri-apps/api/core";
+    import { TauriService } from "$lib/utils/tauri";
     import type {
         ArtistWithCount,
         AlbumWithCount,
@@ -54,9 +54,7 @@
         if (searchTimer) clearTimeout(searchTimer);
         searchTimer = window.setTimeout(async () => {
             try {
-                const tracks = await invoke<Track[]>("search_tracks", {
-                    query: searchQuery,
-                });
+                const tracks = await TauriService.searchTracks(searchQuery);
                 const rArtists = new Set<string>();
                 const rArtistIds = new Set<string>();
                 const rAlbums = new Set<string>();
@@ -73,10 +71,7 @@
                     if (track.genre_id) rGenres.add(track.genre_id);
                 }
 
-                const artistsResult = await invoke<ArtistWithCount[]>(
-                    "get_all_artists",
-                    { query: searchQuery },
-                );
+                const artistsResult = await TauriService.getAllArtists(searchQuery);
                 for (const a of artistsResult) {
                     rArtistIds.add(a.id);
                 }
@@ -214,15 +209,9 @@
         }
         try {
             const [a, al, g] = await Promise.all([
-                invoke<ArtistWithCount[]>("get_all_artists", {
-                    query: searchQuery || null,
-                }),
-                invoke<AlbumWithCount[]>("get_all_albums", {
-                    query: searchQuery || null,
-                }),
-                invoke<GenreWithCount[]>("get_all_genres", {
-                    query: searchQuery || null,
-                }),
+                TauriService.getAllArtists(searchQuery || null),
+                TauriService.getAllAlbums(searchQuery || null),
+                TauriService.getAllGenres(searchQuery || null),
             ]);
             artists = a;
 
@@ -243,10 +232,7 @@
 
     async function loadArtistAlbums(artistId: string) {
         try {
-            const result = await invoke<AlbumWithCount[]>(
-                "get_albums_by_artist",
-                { artistId, query: searchQuery || null },
-            );
+            const result = await TauriService.getAlbumsByArtist(artistId, searchQuery || null);
             artistAlbums = new Map(artistAlbums).set(artistId, result);
         } catch (e) {
             console.error("Failed to load albums for artist:", e);
@@ -255,10 +241,7 @@
 
     async function loadGenreAlbums(genreId: string) {
         try {
-            const result = await invoke<AlbumWithCount[]>(
-                "get_albums_by_genre",
-                { genreId, query: searchQuery || null },
-            );
+            const result = await TauriService.getAlbumsByGenre(genreId, searchQuery || null);
             genreAlbums = new Map(genreAlbums).set(genreId, result);
         } catch (e) {
             console.error("Failed to load albums for genre:", e);

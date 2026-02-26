@@ -45,11 +45,12 @@
     function stopSeeking(finalTime: number) {
         if (onSeek) onSeek(finalTime);
 
+        isDragging = false;
+
         clearTimeout(uiLockTimeout);
         uiLockTimeout = setTimeout(() => {
             isLocked = false;
             isScrubbing = false;
-            isDragging = false;
         }, 500);
     }
 

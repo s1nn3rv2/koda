@@ -1,6 +1,6 @@
 <script lang="ts">
     import { LoaderCircle, Music } from "@lucide/svelte";
-    import { invoke } from "@tauri-apps/api/core";
+    import { TauriService } from "$lib/utils/tauri";
     import { onMount } from "svelte";
     import { getDominantColor } from "$lib/utils/color";
     import { playbackState } from "$lib/state/player.svelte";
@@ -78,22 +78,13 @@
                     !imageHash.startsWith("online-cover:") &&
                     !imageHash.startsWith("http")
                 ) {
-                    const base64Data = await invoke<string | null>(
-                        "get_image_by_hash",
-                        {
-                            hash: imageHash,
-                            size: 128,
-                        },
-                    );
+                    const base64Data = await TauriService.getImageByHash(imageHash, 128);
                     if (base64Data) {
                         colorUrl = `data:image/jpeg;base64,${base64Data}`;
                     }
                 } else if (url.startsWith("http")) {
                     try {
-                        const base64Data = await invoke<string>(
-                            "get_image_from_url",
-                            { url },
-                        );
+                        const base64Data = await TauriService.getImageFromUrl(url);
                         if (base64Data) {
                             colorUrl = `data:image/jpeg;base64,${base64Data}`;
                         }
@@ -111,13 +102,7 @@
                     }
                 });
             } else {
-                const base64Data = await invoke<string | null>(
-                    "get_cover_art",
-                    {
-                        id: trackId,
-                        size: 128,
-                    },
-                );
+                const base64Data = await TauriService.getCoverArt(trackId, 128);
 
                 if (base64Data) {
                     const url = `data:image/jpeg;base64,${base64Data}`;
@@ -170,13 +155,7 @@
                         : `library-asset://localhost/${imageHash}/1024`;
                 }
             } else {
-                const base64Data = await invoke<string | null>(
-                    "get_cover_art",
-                    {
-                        id: trackId,
-                        size: 1024,
-                    },
-                );
+                const base64Data = await TauriService.getCoverArt(trackId, 1024);
 
                 if (base64Data) {
                     fullResUrl = `data:image/jpeg;base64,${base64Data}`;

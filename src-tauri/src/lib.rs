@@ -96,6 +96,10 @@ pub fn run() {
             let player = music_player::PlayerState::new(mixer);
             app.manage(player);
 
+            app.manage(library::download::DownloadStateManager {
+                tokens: Arc::new(tokio::sync::Mutex::new(std::collections::HashMap::new())),
+            });
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -132,6 +136,8 @@ pub fn run() {
             library::get_tracks_by_album_page,
             library::get_tracks_by_genre_page,
             library::download_track,
+            library::download_mpd_track,
+            library::cancel_download,
             library::import_downloaded_track,
             library::write_file_bytes,
             library::get_subdirectories,

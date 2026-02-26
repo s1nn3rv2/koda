@@ -18,7 +18,7 @@
 </script>
 
 <footer
-    class="fixed bottom-0 left-0 right-0 z-50 border-t border-white/[0.08] overflow-hidden shadow-[0_-8px_40px_rgba(0,0,0,0.6)]"
+    class="fixed bottom-0 left-0 right-0 z-50 border-t border-white/8 overflow-hidden shadow-[0_-8px_40px_rgba(0,0,0,0.6)]"
     style="background: rgba(12, 12, 15, 0.98); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); tra"
 >
     <div
@@ -31,7 +31,7 @@
         ></div>
 
         <div
-            class="absolute inset-0 opacity-[0.03] z-10"
+            class="absolute inset-0 opacity-3 z-10"
             style="background-image: url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noise%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noise)%22/%3E%3C/svg%3E');"
         ></div>
 

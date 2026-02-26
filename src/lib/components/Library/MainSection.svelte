@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { invoke } from "@tauri-apps/api/core";
     import { untrack } from "svelte";
     import { uiState } from "$lib/state/player.svelte";
     import type {
@@ -96,34 +95,15 @@
         const sort = sortParams();
         switch (sel.type) {
             case "all":
-                return invoke<PaginatedTracks>("get_tracks_page", {
-                    limit,
-                    offset,
-                    ...sort,
-                });
+                return TauriService.getTracksPage(limit, offset, sort.sortColumn, sort.sortDir);
             case "artist":
-                return invoke<PaginatedTracks>("get_tracks_by_artist_page", {
-                    artistId: sel.artist.id,
-                    limit,
-                    offset,
-                    ...sort,
-                });
+                return TauriService.getTracksByArtistPage(sel.artist.id, limit, offset, sort.sortColumn, sort.sortDir);
             case "artist-album":
             case "genre-album":
             case "album":
-                return invoke<PaginatedTracks>("get_tracks_by_album_page", {
-                    albumId: sel.album.id,
-                    limit,
-                    offset,
-                    ...sort,
-                });
+                return TauriService.getTracksByAlbumPage(sel.album.id, limit, offset, sort.sortColumn, sort.sortDir);
             case "genre":
-                return invoke<PaginatedTracks>("get_tracks_by_genre_page", {
-                    genreId: sel.genre.id,
-                    limit,
-                    offset,
-                    ...sort,
-                });
+                return TauriService.getTracksByGenrePage(sel.genre.id, limit, offset, sort.sortColumn, sort.sortDir);
             case "queue":
                 return { tracks: [], total: 0 };
         }
@@ -187,14 +167,13 @@
         if (!query) return;
         try {
             isSearchingMore = true;
-            const result = await invoke<PaginatedTracks>(
-                "search_tracks_paginated",
-                {
-                    query,
-                    limit: PAGE_SIZE,
-                    offset: searchResults.length,
-                    ...sortParams(),
-                },
+            const sort = sortParams();
+            const result = await TauriService.searchTracksPaginated(
+                query,
+                PAGE_SIZE,
+                searchResults.length,
+                sort.sortColumn,
+                sort.sortDir
             );
             searchResults = [...searchResults, ...result.tracks];
             searchTotal = result.total;
@@ -232,7 +211,7 @@
 
     async function handleDelete(id: string) {
         try {
-            await invoke("delete_track", { id });
+            await TauriService.deleteTrack(id);
             removeTrackFromUI(id);
             libraryState.refresh();
         } catch (e) {
@@ -350,14 +329,13 @@
             }
             try {
                 searchOffset = 0;
-                const result = await invoke<PaginatedTracks>(
-                    "search_tracks_paginated",
-                    {
-                        query,
-                        limit: PAGE_SIZE,
-                        offset: 0,
-                        ...sortParams(),
-                    },
+                const sort = sortParams();
+                const result = await TauriService.searchTracksPaginated(
+                    query,
+                    PAGE_SIZE,
+                    0,
+                    sort.sortColumn,
+                    sort.sortDir
                 );
                 searchResults = result.tracks;
                 searchTotal = result.total;

@@ -1,8 +1,8 @@
-import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { tempDir } from "@tauri-apps/api/path";
 import { settingsState } from "./settings.svelte";
 import { monochromeService } from "$lib/services/monochrome";
+import { TauriService } from "$lib/utils/tauri";
 import type { Track } from "$lib/types";
 
 export interface DownloadInfo {
@@ -64,7 +64,8 @@ class DownloadState {
         try {
             const onlineId = parseInt(track.id.split(":")[1]);
             const response = await fetch(`${settingsState.monochromeInstance}/track/?id=${onlineId}&quality=${settingsState.downloadQuality}`);
-            if (!response.ok) throw new Error("Failed to get track info");
+
+            if (!response.ok) throw new Error(`Failed to get track info: ${response.statusText}`);
             const data = await response.json();
             const manifestBase64 = data.data?.manifest || data.manifest;
 
@@ -99,11 +100,11 @@ class DownloadState {
                     console.warn("Failed to fetch cover URL:", e);
                 }
 
-                await invoke("download_track", {
+                await TauriService.downloadTrack(
                     url,
-                    downloadId: id,
+                    id,
                     tempPath
-                });
+                );
             }
 
             dl.status = 'finished';
@@ -129,61 +130,34 @@ class DownloadState {
         const mediaTemplate = mediaMatch[1].startsWith('http') ? mediaMatch[1] : baseUrl + mediaMatch[1];
         const startNumber = parseInt(startNumberMatch ? startNumberMatch[1] : "1");
 
-        const chunks: Uint8Array[] = [];
+        dl.fileType = 'DASH (FLAC)';
 
-        const segmentUrls: string[] = [initUrl];
-
-        dl.status = 'downloading';
-        let receivedBytes = 0;
-        let segmentIndex = startNumber;
-
-        while (true) {
-            const currentUrl = segmentUrls.length === 1
-                ? initUrl
-                : mediaTemplate.replace('$Number$', segmentIndex.toString());
-
-            if (segmentUrls.length === 1) dl.fileType = 'DASH (FLAC)';
-
-            try {
-                const res = await fetch(currentUrl);
-                if (!res.ok) break;
-
-                const buffer = await res.arrayBuffer();
-                const chunk = new Uint8Array(buffer);
-                chunks.push(chunk);
-                receivedBytes += chunk.byteLength;
-
-                dl.current = receivedBytes;
-
-                if (segmentUrls.length === 1) {
-                    segmentUrls.push(mediaTemplate); // Mark that we found init
-                } else {
-                    segmentIndex++;
-                }
-
-                if (segmentIndex > startNumber + 500) break;
-            } catch {
-                break;
-            }
-        }
-
-        const totalBytes = chunks.reduce((acc, c) => acc + c.byteLength, 0);
-        const merged = new Uint8Array(totalBytes);
-        let offset = 0;
-        for (const chunk of chunks) {
-            merged.set(chunk, offset);
-            offset += chunk.byteLength;
-        }
-
-        await invoke("write_file_bytes", {
-            path: dl.tempPath,
-            bytes: Array.from(merged)
-        });
+        await TauriService.downloadMpdTrack(
+            initUrl,
+            mediaTemplate,
+            startNumber,
+            dl.id,
+            dl.tempPath
+        );
     }
 
     async clearFinished(id: string) {
         this.downloads = this.downloads.filter(d => d.id !== id);
     }
+
+    async cancelDownload(id: string) {
+        try {
+            await TauriService.cancelDownload(id);
+        } catch (e) {
+            console.error("Failed to cancel download backend task:", e);
+        } finally {
+            this.downloads = this.downloads.filter(d => d.id !== id);
+        }
+    }
 }
 
-export const downloadState = new DownloadState();
+export function createDownloadState() {
+    return new DownloadState();
+}
+
+export const downloadState = createDownloadState();

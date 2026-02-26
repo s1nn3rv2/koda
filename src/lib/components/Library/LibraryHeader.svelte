@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { invoke } from "@tauri-apps/api/core";
+    import { TauriService } from "$lib/utils/tauri";
     import { listen } from "@tauri-apps/api/event";
     import { PanelLeft, X } from "@lucide/svelte";
     import { onMount } from "svelte";
@@ -31,7 +31,7 @@
 
     async function loadStats() {
         try {
-            libraryStats = await invoke<LibraryStats>("get_library_stats");
+            libraryStats = await TauriService.getLibraryStats();
         } catch (e) {
             console.error("Failed to load stats:", e);
         }
@@ -50,9 +50,7 @@
             errorMsg = "";
             successMsg = "";
 
-            const count: number = await invoke("scan_and_save_library", {
-                paths: $state.snapshot(settingsState.musicPaths),
-            });
+            const count: number = await TauriService.scanAndSaveLibrary($state.snapshot(settingsState.musicPaths));
             successMsg = `Added ${count} new ${pluralize(count, "track")} to library`;
 
             await loadStats();

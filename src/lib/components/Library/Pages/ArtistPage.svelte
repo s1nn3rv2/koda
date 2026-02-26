@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount, untrack } from "svelte";
-    import { invoke } from "@tauri-apps/api/core";
+    import { TauriService } from "$lib/utils/tauri";
     import { ChevronDown, ChevronUp, RefreshCw } from "@lucide/svelte";
     import {
         TRACK_SORT_OPTIONS,
@@ -77,10 +77,7 @@
         lastFetchedId = id;
 
         try {
-            const hash = await invoke<string | null>("fetch_artist_metadata", {
-                artistId: id,
-                provider,
-            });
+            const hash = await TauriService.fetchArtistMetadata(id, provider);
             if (id === artist.id) {
                 fetchedHash = hash;
             }
@@ -96,15 +93,11 @@
     async function loadAlbums() {
         try {
             isLoadingAlbums = true;
-            const rawAlbums = await invoke<AlbumWithCount[]>(
-                "get_albums_by_artist",
-                {
-                    artistId: artist.id,
-                    query: null,
-                    sortColumn:
-                        albumSortColumn === "default" ? null : albumSortColumn,
-                    sortDir: albumSortDirection,
-                },
+            const rawAlbums = await TauriService.getAlbumsByArtist(
+                artist.id,
+                null,
+                albumSortColumn === "default" ? null : albumSortColumn,
+                albumSortDirection
             );
 
             // we prioritize non-featured albums

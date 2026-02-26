@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { invoke } from "@tauri-apps/api/core";
+    import { TauriService } from "$lib/utils/tauri";
     import type { AlbumWithCount } from "$lib/types";
     import CoverArt from "$lib/components/CoverArt.svelte";
     import { formatDate } from "$lib/utils/format";
@@ -38,10 +38,7 @@
                 label: "Refetch Metadata",
                 icon: RefreshCw,
                 onclick: async () => {
-                    await invoke("fetch_album_metadata", {
-                        albumId: album.id,
-                        force: true,
-                    });
+                    await TauriService.fetchAlbumMetadata(album.id, "auto", true);
                     libraryState.refresh();
                 },
             },

@@ -32,7 +32,7 @@
 
 <script lang="ts">
     import { LoaderCircle, Music } from "@lucide/svelte";
-    import { invoke } from "@tauri-apps/api/core";
+    import { TauriService } from "$lib/utils/tauri";
     import { onMount, onDestroy } from "svelte";
     import { monochromeService } from "$lib/services/monochrome";
 
@@ -144,13 +144,7 @@
                     coverCache.set(cacheKey, url);
                 }
             } else if (trackId) {
-                const base64Data = await invoke<string | null>(
-                    "get_cover_art",
-                    {
-                        id: trackId,
-                        size,
-                    },
-                );
+                const base64Data = await TauriService.getCoverArt(trackId, size);
                 if (base64Data) {
                     const dataUrl = `data:image/jpeg;base64,${base64Data}`;
                     coverUrl = dataUrl;

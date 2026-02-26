@@ -22,7 +22,7 @@
 </script>
 
 <aside
-    class="w-64 h-full shrink-0 overflow-y-auto rounded-xl bg-white/[0.02] border border-white/5 p-3 pb-24"
+    class="w-64 h-full shrink-0 overflow-y-auto rounded-xl bg-white/2 border border-white/5 p-3 pb-24"
 >
     <div class="flex gap-2 items-center mb-3">
         {#if !uiState.sidebarHidden}

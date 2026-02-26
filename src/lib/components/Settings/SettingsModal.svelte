@@ -71,7 +71,7 @@
             transition:scale={{ duration: 300, start: 0.95 }}
         >
             <div
-                class="px-8 py-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]"
+                class="px-8 py-6 border-b border-white/5 flex items-center justify-between bg-white/2"
             >
                 <div class="flex items-center gap-4">
                     <div
@@ -124,7 +124,7 @@
                     <div class="space-y-2">
                         {#if settingsState.musicPaths.length === 0}
                             <div
-                                class="p-8 bg-white/[0.02] border border-white/5 border-dashed rounded-2xl text-center"
+                                class="p-8 bg-white/2 border border-white/5 border-dashed rounded-2xl text-center"
                             >
                                 <p class="text-[11px] text-gray-500">
                                     No music folders added yet.
@@ -140,7 +140,7 @@
                             <div class="grid gap-2">
                                 {#each settingsState.musicPaths as path}
                                     <div
-                                        class="flex items-center justify-between p-3 bg-white/[0.03] border border-white/5 rounded-xl group"
+                                        class="flex items-center justify-between p-3 bg-white/3 border border-white/5 rounded-xl group"
                                     >
                                         <div
                                             class="flex items-center gap-3 overflow-hidden"
@@ -206,7 +206,7 @@
 
                             {#if settingsState.dynamicInstances.length === 0 && !settingsState.isLoadingInstances}
                                 <div
-                                    class="p-6 bg-white/[0.02] border border-white/5 rounded-2xl text-center"
+                                    class="p-6 bg-white/2 border border-white/5 rounded-2xl text-center"
                                 >
                                     <p class="text-xs text-gray-500">
                                         Failed to fetch live instances. Check
@@ -222,10 +222,10 @@
                                             settingsState.setInstance(
                                                 instance.url,
                                             )}
-                                        class="flex items-center justify-between p-3 bg-white/[0.02] border {settingsState.monochromeInstance ===
+                                        class="flex items-center justify-between p-3 bg-white/2 border {settingsState.monochromeInstance ===
                                         instance.url
                                             ? 'border-indigo-500/40 bg-indigo-500/5'
-                                            : 'border-white/5'} rounded-xl hover:bg-white/[0.05] transition-all text-left"
+                                            : 'border-white/5'} rounded-xl hover:bg-white/5 transition-all text-left"
                                     >
                                         <div
                                             class="flex items-center gap-3 overflow-hidden"
@@ -287,7 +287,7 @@
                                     type="text"
                                     bind:value={customUrl}
                                     placeholder="https://your-api-instance.com"
-                                    class="flex-1 px-4 py-2.5 bg-white/[0.03] border border-white/10 rounded-xl text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 transition-all"
+                                    class="flex-1 px-4 py-2.5 bg-white/3 border border-white/10 rounded-xl text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 transition-all"
                                 />
                                 <button
                                     onclick={() =>
@@ -326,10 +326,10 @@
                                     settingsState.setAudioQuality(
                                         option.value as any,
                                     )}
-                                class="flex items-center justify-between p-3 bg-white/[0.03] border {settingsState.audioQuality ===
+                                class="flex items-center justify-between p-3 bg-white/3 border {settingsState.audioQuality ===
                                 option.value
                                     ? 'border-indigo-500/50 bg-indigo-500/5'
-                                    : 'border-white/5'} rounded-xl hover:bg-white/[0.06] transition-all text-left"
+                                    : 'border-white/5'} rounded-xl hover:bg-white/6 transition-all text-left"
                             >
                                 <div>
                                     <div
@@ -377,10 +377,10 @@
                                     settingsState.setDownloadQuality(
                                         option.value as any,
                                     )}
-                                class="flex items-center justify-between p-3 bg-white/[0.03] border {settingsState.downloadQuality ===
+                                class="flex items-center justify-between p-3 bg-white/3 border {settingsState.downloadQuality ===
                                 option.value
                                     ? 'border-green-500/40 bg-green-500/5'
-                                    : 'border-white/5'} rounded-xl hover:bg-white/[0.06] transition-all text-left"
+                                    : 'border-white/5'} rounded-xl hover:bg-white/6 transition-all text-left"
                             >
                                 <div>
                                     <div
@@ -406,7 +406,7 @@
             </div>
 
             <div
-                class="px-8 py-5 border-t border-white/5 bg-white/[0.01] flex items-center justify-end"
+                class="px-8 py-5 border-t border-white/5 bg-white/1 flex items-center justify-end"
             >
                 <button
                     onclick={close}

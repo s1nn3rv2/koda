@@ -30,7 +30,7 @@
 </script>
 
 <div
-    class="flex items-center justify-between h-8 bg-zinc-950/40 backdrop-blur-xl select-none border-b border-white/[0.03] sticky top-0 z-[100]"
+    class="flex items-center justify-between h-8 bg-zinc-950/40 backdrop-blur-xl select-none border-b border-white/3 sticky top-0 z-[100]"
 >
     <div
         data-tauri-drag-region

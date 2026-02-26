@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount, untrack } from "svelte";
-    import { invoke } from "@tauri-apps/api/core";
+    import { TauriService } from "$lib/utils/tauri";
     import type { Track, AlbumWithCount } from "$lib/types";
     import type { ContextMenuItem } from "$lib/state/context_menu.svelte";
     import { RefreshCw } from "@lucide/svelte";
@@ -53,14 +53,7 @@
         lastFetchedId = id;
 
         try {
-            const result = await invoke<[string | null, string | null]>(
-                "fetch_album_metadata",
-                {
-                    albumId: id,
-                    provider,
-                    force,
-                },
-            );
+            const result = await TauriService.fetchAlbumMetadata(id, provider, force);
 
             if (id === album.id) {
                 const [date, hash] = result;

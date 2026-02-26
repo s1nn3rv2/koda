@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
+import { TauriService } from "$lib/utils/tauri";
 import type { WaveformData } from "$lib/types";
 
 interface WaveformLoaderState {
@@ -29,7 +29,7 @@ export function useWaveformLoader(getTrackId: () => string | null | undefined) {
     }
 
     try {
-      const data: WaveformData = await invoke("get_waveform", { id });
+      const data: WaveformData = await TauriService.getWaveform(id);
 
       const currentTrackId = getTrackId();
       if (id === currentTrackId) {
