@@ -149,7 +149,7 @@ class MonochromeService {
       releaseDate = releaseDate.split("T")[0];
     }
 
-    const albumTitle = ot.album.title === ot.title ? null : ot.album.title;
+    const albumTitle = ot.album.title || null;
 
     return {
       id: `online:${ot.id}`,

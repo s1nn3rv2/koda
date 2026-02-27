@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { untrack } from "svelte";
     import { downloadState } from "$lib/state/download.svelte";
     import { settingsState } from "$lib/state/settings.svelte";
     import {
@@ -85,16 +86,33 @@
         }
     });
 
+
+
     $effect(() => {
         if (dl) {
-            title = dl.track.title || "";
-            artists = dl.track.artists || "";
-            album = dl.track.album || "";
-            albumArtist = dl.track.album_artist || "";
-            genre = settingsState.lastImportGenre || dl.track.genre || "";
-            trackNumber = dl.track.track_number || null;
-            discNumber = dl.track.disc_number || null;
-            releaseDate = dl.track.release_date || "";
+            untrack(() => {
+                let initTitle = dl.track.title || "";
+                let initAlbum = dl.track.album || "";
+                let initTrackNum = dl.track.track_number || null;
+                let initDiscNum = dl.track.disc_number || null;
+
+                title = initTitle;
+                artists = dl.track.artists || "";
+                albumArtist = dl.track.album_artist || "";
+                genre = settingsState.lastImportGenre || dl.track.genre || "";
+                releaseDate = dl.track.release_date || "";
+
+                if (initAlbum === initTitle && initTrackNum === 1 && initDiscNum === 1) {
+                    album = "";
+                    albumArtist = "";
+                    trackNumber = null;
+                    discNumber = null;
+                } else {
+                    album = initAlbum;
+                    trackNumber = initTrackNum;
+                    discNumber = initDiscNum;
+                }
+            });
         }
     });
 

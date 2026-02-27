@@ -50,7 +50,9 @@
             errorMsg = "";
             successMsg = "";
 
-            const count: number = await TauriService.scanAndSaveLibrary($state.snapshot(settingsState.musicPaths));
+            const count: number = await TauriService.scanAndSaveLibrary(
+                $state.snapshot(settingsState.musicPaths),
+            );
             successMsg = `Added ${count} new ${pluralize(count, "track")} to library`;
 
             await loadStats();
@@ -153,7 +155,7 @@
             </div>
             <div class="w-full bg-white/10 rounded-full h-1.5 mb-1.5">
                 <div
-                    class="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
+                    class="bg-blue-500 h-1.5 rounded-full transition-all duration-25"
                     style="width: {(libraryState.scanProgress.current /
                         libraryState.scanProgress.total) *
                         100}%"

@@ -198,11 +198,11 @@
                     )}
                     {@render textField(
                         User,
-                        "Album Artist",
+                        "Album Artists",
                         albumArtist,
                         (v) => (albumArtist = v),
                         false,
-                        "Unknown Album Artist",
+                        "Unknown Album Artists",
                     )}
                     {@render textField(
                         Calendar,
@@ -240,11 +240,7 @@
             <div
                 class="px-6 py-4 bg-white/5 border-t border-white/5 flex items-center justify-between backdrop-blur-md"
             >
-                <p class="text-[10px] text-gray-500 italic max-w-[60%]">
-                    Changes will be saved directly to the audio file and synced
-                    with your library.
-                </p>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 ml-auto">
                     <button
                         onclick={close}
                         class="px-5 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors"
@@ -253,7 +249,7 @@
                     <button
                         onclick={handleSave}
                         disabled={isSaving}
-                        class="px-5 py-2 bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/20 flex items-center gap-2 active:scale-95"
+                        class="px-3 py-2 bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/20 flex items-center gap-2 active:scale-95"
                     >
                         {#if isSaving}
                             <div

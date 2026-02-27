@@ -48,7 +48,7 @@ class DownloadState {
         const filename = `${track.title || 'track'}_${id}.tmp`;
         const tempPath = `${baseTemp}/${filename}`;
 
-        const dl: DownloadInfo = {
+        const initialDl: DownloadInfo = {
             id,
             track,
             current: 0,
@@ -59,7 +59,8 @@ class DownloadState {
             fileType: 'loading...'
         };
 
-        this.downloads.push(dl);
+        this.downloads.push(initialDl);
+        const dl = this.downloads.find(d => d.id === id)!;
 
         try {
             const onlineId = parseInt(track.id.split(":")[1]);
@@ -143,6 +144,15 @@ class DownloadState {
 
     async clearFinished(id: string) {
         this.downloads = this.downloads.filter(d => d.id !== id);
+    }
+
+    async retryDownload(id: string) {
+        const dl = this.downloads.find(d => d.id === id);
+        if (dl) {
+            const track = dl.track;
+            this.downloads = this.downloads.filter(d => d.id !== id);
+            await this.startDownload(track);
+        }
     }
 
     async cancelDownload(id: string) {

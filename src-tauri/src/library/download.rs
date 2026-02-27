@@ -256,15 +256,14 @@ pub async fn import_downloaded_track(
         tagged_file.first_tag_mut().unwrap()
     };
 
-    let album_name = metadata.album.as_ref().filter(|s| !s.trim().is_empty());
-    let _has_album = album_name.is_some();
-
     if let Some(ref t) = metadata.title {
         tag.set_title(t.clone());
     }
     if let Some(ref a) = metadata.artists {
         tag.set_artist(a.clone());
     }
+
+    let album_name = metadata.album.as_ref().filter(|s| !s.trim().is_empty());
 
     if let Some(al) = album_name {
         tag.set_album(al.clone());
@@ -313,14 +312,11 @@ pub async fn import_downloaded_track(
 
     let mut track = scan_result.track;
 
-    track.title = metadata.title;
     track.artists = metadata.artists;
-
-    let album_name = metadata.album.as_ref().filter(|s| !s.trim().is_empty());
     track.album = album_name.cloned();
 
     if track.album.is_some() {
-        track.album_artist = metadata.album_artist.clone();
+        track.album_artist = metadata.album_artist;
         track.track_number = metadata.track_number;
         track.disc_number = metadata.disc_number;
     } else {
@@ -329,6 +325,7 @@ pub async fn import_downloaded_track(
         track.disc_number = None;
     }
 
+    track.title = metadata.title;
     track.release_date = metadata.release_date;
     track.genre = metadata.genre;
 
