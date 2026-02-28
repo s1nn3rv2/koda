@@ -591,3 +591,56 @@ pub async fn get_image_from_url(url: String) -> Result<String, String> {
         data,
     ))
 }
+
+#[command]
+pub fn get_embedded_lyrics(path: String) -> Result<Option<String>, String> {
+    let p = std::path::Path::new(&path);
+    if !p.exists() {
+        return Err("File does not exist".to_string());
+    }
+
+    let tagged_file = lofty::probe::Probe::open(p)
+        .map_err(|e| e.to_string())?
+        .read()
+        .map_err(|e| e.to_string())?;
+
+    if let Some(tag) = tagged_file.primary_tag().or(tagged_file.first_tag()) {
+        if let Some(lyrics) = tag.get_string(ItemKey::Lyrics) {
+            return Ok(Some(lyrics.to_string()));
+        }
+    }
+
+    Ok(None)
+}
+
+#[command]
+pub fn embed_lyrics(path: String, lyrics: String) -> Result<(), String> {
+    let p = std::path::Path::new(&path);
+    if !p.exists() {
+        return Err("File does not exist".to_string());
+    }
+
+    let mut tagged_file = lofty::probe::Probe::open(p)
+        .map_err(|e| e.to_string())?
+        .read()
+        .map_err(|e| e.to_string())?;
+
+    if tagged_file.primary_tag().is_none() && tagged_file.first_tag().is_none() {
+        let tag_type = tagged_file.primary_tag_type();
+        tagged_file.insert_tag(lofty::tag::Tag::new(tag_type));
+    }
+
+    let tag = if tagged_file.primary_tag().is_some() {
+        tagged_file.primary_tag_mut().unwrap()
+    } else {
+        tagged_file.first_tag_mut().unwrap()
+    };
+
+    tag.insert_text(ItemKey::Lyrics, lyrics);
+
+    tagged_file
+        .save_to_path(p, lofty::config::WriteOptions::default())
+        .map_err(|e: lofty::error::LoftyError| e.to_string())?;
+
+    Ok(())
+}

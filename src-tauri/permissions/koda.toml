@@ -33,7 +33,11 @@ commands.allow = [
     "download_track",
     "import_downloaded_track",
     "write_file_bytes",
-    "get_subdirectories"
+    "get_subdirectories",
+    "download_mpd_track",
+    "cancel_download",
+    "get_embedded_lyrics",
+    "embed_lyrics"
 ]
 
 [[permission]]
@@ -41,7 +45,8 @@ identifier = "allow-metadata-commands"
 description = "Allows access to external metadata fetching commands"
 commands.allow = [
     "fetch_artist_metadata",
-    "fetch_album_metadata"
+    "fetch_album_metadata",
+    "fetch_lyrics"
 ]
 
 [[permission]]

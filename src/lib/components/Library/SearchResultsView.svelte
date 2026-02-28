@@ -13,6 +13,7 @@
         searchResults: Track[];
         searchTotal: number;
         isSearching: boolean;
+        displayedSearchQuery: string;
         sortOptions: SortOption[];
         sortColumn: SortColumn;
         sortDirection: SortDirection;
@@ -32,6 +33,7 @@
         searchResults,
         searchTotal,
         isSearching,
+        displayedSearchQuery,
         sortOptions,
         sortColumn = $bindable(),
         sortDirection = $bindable(),
@@ -51,9 +53,10 @@
     const loading = $derived(isSearching || libraryState.isOnlineSearching);
 
     const subtitle = $derived.by(() => {
-        if (loading) return "Searching...";
-        const query = libraryState.searchQuery.trim();
         const count = isOnline ? libraryState.onlineSearchTotal : searchTotal;
+        const query = displayedSearchQuery;
+        if (!query) return "";
+        if (loading && count === 0) return "Searching...";
         return `${count} ${pluralize(count, "result")} for "${query}"`;
     });
 

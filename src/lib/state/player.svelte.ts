@@ -10,6 +10,7 @@ class UIState {
   libraryMode = $state<'local' | 'online'>(
     (typeof localStorage !== 'undefined' && localStorage.getItem('libraryMode') as 'local' | 'online') || 'local'
   );
+  showLyrics = $state(false);
 
   toggleExpanded() {
     this.isExpanded = !this.isExpanded;
@@ -22,6 +23,10 @@ class UIState {
   setLibraryMode(mode: 'local' | 'online') {
     this.libraryMode = mode;
     localStorage.setItem('libraryMode', mode);
+  }
+
+  toggleLyrics() {
+    this.showLyrics = !this.showLyrics;
   }
 }
 

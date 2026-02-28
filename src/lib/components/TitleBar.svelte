@@ -36,6 +36,7 @@
         data-tauri-drag-region
         class="flex-1 h-full flex items-center px-4 gap-2"
     >
+        <img src="favicon.png" class="w-4 h-4" alt="koda-icon" />
         <span
             class="text-[10px] font-bold tracking-[0.2em] text-indigo-400/80 uppercase"
         >
@@ -47,7 +48,7 @@
         <button
             onclick={() => settingsState.toggleSettings()}
             class="flex items-center justify-center w-10 h-full hover:bg-white/5 transition-colors text-zinc-400 hover:text-zinc-200"
-            title="settings"
+            title="Settings"
         >
             <Settings size={14} />
         </button>
@@ -55,14 +56,14 @@
         <button
             onclick={minimize}
             class="flex items-center justify-center w-10 h-full hover:bg-white/5 transition-colors text-zinc-400 hover:text-zinc-200"
-            title="minimize"
+            title="Minimize"
         >
             <Minus size={16} />
         </button>
         <button
             onclick={toggleMaximize}
             class="flex items-center justify-center w-10 h-full hover:bg-white/5 transition-colors text-zinc-400 hover:text-zinc-200"
-            title={isMaximized ? "restore" : "maximize"}
+            title={isMaximized ? "Restore" : "Maximize"}
         >
             {#if isMaximized}
                 <Copy size={16} />
@@ -73,7 +74,7 @@
         <button
             onclick={close}
             class="flex items-center justify-center w-11 h-full hover:bg-red-500/80 transition-colors text-zinc-400 hover:text-white"
-            title="close"
+            title="Close"
         >
             <X size={20} />
         </button>

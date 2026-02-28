@@ -144,6 +144,14 @@ export class TauriService {
     return invoke("get_image_from_url", { url });
   }
 
+  static async getEmbeddedLyrics(path: string): Promise<string | null> {
+    return invoke("get_embedded_lyrics", { path });
+  }
+
+  static async embedLyrics(path: string, lyrics: string): Promise<void> {
+    return invoke("embed_lyrics", { path, lyrics });
+  }
+
   static async searchTracks(query: string): Promise<Track[]> {
     return invoke("search_tracks", { query });
   }
@@ -308,5 +316,19 @@ export class TauriService {
     force: boolean = false,
   ): Promise<[string | null, string | null]> {
     return invoke("fetch_album_metadata", { albumId, provider, force });
+  }
+
+  static async fetchLyrics(
+    trackName: string,
+    artistName: string,
+    albumName: string | null = null,
+    duration: number | null = null,
+  ): Promise<any> {
+    return invoke("fetch_lyrics", {
+      trackName,
+      artistName,
+      albumName,
+      duration,
+    });
   }
 }

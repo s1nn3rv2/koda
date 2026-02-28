@@ -1,6 +1,7 @@
 <script lang="ts">
     import { VolumeX, Volume, Volume1, Volume2 } from "@lucide/svelte";
     import { playbackState, uiState } from "$lib/state/player.svelte";
+    import Tooltip from "../Tooltip.svelte";
 
     $effect(() => {
         playbackState.volume;
@@ -43,13 +44,17 @@
         : 'flex-row'} items-center gap-2 h-full"
 >
     <button
-        class="shrink-0 flex items-center justify-center {uiState.isExpanded
+        class="group relative shrink-0 flex items-center justify-center {uiState.isExpanded
             ? 'h-8'
             : ''} hover:bg-surface-hover rounded-full p-1 transition-colors cursor-pointer"
         onclick={toggleMute}
         aria-label={playbackState.isMuted ? "Unmute" : "Mute"}
     >
         <VolumeIcon size={16} class="text-text-secondary" />
+        <Tooltip
+            text={playbackState.isMuted ? "Unmute" : "Mute"}
+            position={uiState.isExpanded ? "left" : "top"}
+        />
     </button>
     <div
         class="flex items-center justify-center {uiState.isExpanded

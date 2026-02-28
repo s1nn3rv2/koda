@@ -36,9 +36,11 @@
     let relatedAlbumIds = $state(new Set<string>());
     let relatedGenreIds = $state(new Set<string>());
     let searchTimer: number | null = null;
+    let debouncedQuery = $state("");
 
     $effect(() => {
         if (!searchQuery) {
+            debouncedQuery = "";
             relatedArtistNames = new Set();
             relatedAlbumIds = new Set();
             relatedGenreIds = new Set();
@@ -53,6 +55,7 @@
 
         if (searchTimer) clearTimeout(searchTimer);
         searchTimer = window.setTimeout(async () => {
+            debouncedQuery = searchQuery;
             try {
                 const tracks = await TauriService.searchTracks(searchQuery);
                 const rArtists = new Set<string>();
@@ -85,12 +88,12 @@
             } catch (e) {
                 console.error(e);
             }
-        }, 300);
+        }, 150);
     });
 
     let filteredArtists = $derived.by(() => {
-        if (!searchQuery) return artists;
-        const query = searchQuery.toLowerCase();
+        if (!debouncedQuery) return artists;
+        const query = debouncedQuery.toLowerCase();
         return artists
             .filter(
                 (a) =>
@@ -117,8 +120,8 @@
     });
 
     let filteredAlbums = $derived.by(() => {
-        if (!searchQuery) return albums;
-        const query = searchQuery.toLowerCase();
+        if (!debouncedQuery) return albums;
+        const query = debouncedQuery.toLowerCase();
         return albums
             .filter(
                 (a) =>
@@ -156,8 +159,8 @@
     });
 
     let filteredGenres = $derived.by(() => {
-        if (!searchQuery) return genres;
-        const query = searchQuery.toLowerCase();
+        if (!debouncedQuery) return genres;
+        const query = debouncedQuery.toLowerCase();
         return genres
             .filter(
                 (g) =>
@@ -392,7 +395,7 @@
             {itemBase}
             {itemIdle}
             {itemActive}
-            {searchQuery}
+            searchQuery={debouncedQuery}
         />
 
         <GenresSection
@@ -408,10 +411,10 @@
             {itemBase}
             {itemIdle}
             {itemActive}
-            {searchQuery}
+            searchQuery={debouncedQuery}
         />
     </nav>
-{:else if !searchQuery}
+{:else if !debouncedQuery}
     <div class="px-4 py-8 text-center">
         <Globe size={32} class="mx-auto text-indigo-500/30 mb-4" />
         <p class="text-xs text-gray-500 leading-relaxed">

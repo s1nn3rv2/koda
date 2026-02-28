@@ -41,6 +41,7 @@
     let errorMsg = $state("");
     let sectionElement = $state<HTMLElement>();
     let searchTimeout: number | null = null;
+    let displayedSearchQuery = $state("");
 
     const hasMoreOnlineSearch = $derived(
         libraryState.onlineSearchResults.length <
@@ -95,15 +96,38 @@
         const sort = sortParams();
         switch (sel.type) {
             case "all":
-                return TauriService.getTracksPage(limit, offset, sort.sortColumn, sort.sortDir);
+                return TauriService.getTracksPage(
+                    limit,
+                    offset,
+                    sort.sortColumn,
+                    sort.sortDir,
+                );
             case "artist":
-                return TauriService.getTracksByArtistPage(sel.artist.id, limit, offset, sort.sortColumn, sort.sortDir);
+                return TauriService.getTracksByArtistPage(
+                    sel.artist.id,
+                    limit,
+                    offset,
+                    sort.sortColumn,
+                    sort.sortDir,
+                );
             case "artist-album":
             case "genre-album":
             case "album":
-                return TauriService.getTracksByAlbumPage(sel.album.id, limit, offset, sort.sortColumn, sort.sortDir);
+                return TauriService.getTracksByAlbumPage(
+                    sel.album.id,
+                    limit,
+                    offset,
+                    sort.sortColumn,
+                    sort.sortDir,
+                );
             case "genre":
-                return TauriService.getTracksByGenrePage(sel.genre.id, limit, offset, sort.sortColumn, sort.sortDir);
+                return TauriService.getTracksByGenrePage(
+                    sel.genre.id,
+                    limit,
+                    offset,
+                    sort.sortColumn,
+                    sort.sortDir,
+                );
             case "queue":
                 return { tracks: [], total: 0 };
         }
@@ -173,7 +197,7 @@
                 PAGE_SIZE,
                 searchResults.length,
                 sort.sortColumn,
-                sort.sortDir
+                sort.sortDir,
             );
             searchResults = [...searchResults, ...result.tracks];
             searchTotal = result.total;
@@ -320,10 +344,11 @@
             return;
         }
 
-        isSearching = true;
         searchTimeout = window.setTimeout(async () => {
+            isSearching = true;
             if (mode === "online") {
                 await libraryState.searchOnline(query);
+                displayedSearchQuery = query;
                 isSearching = false;
                 return;
             }
@@ -335,16 +360,17 @@
                     PAGE_SIZE,
                     0,
                     sort.sortColumn,
-                    sort.sortDir
+                    sort.sortDir,
                 );
                 searchResults = result.tracks;
                 searchTotal = result.total;
+                displayedSearchQuery = query;
             } catch (e) {
                 console.error("Search failed:", e);
             } finally {
                 isSearching = false;
             }
-        }, 250);
+        }, 75);
     });
 </script>
 
@@ -367,6 +393,7 @@
             {searchResults}
             {searchTotal}
             {isSearching}
+            {displayedSearchQuery}
             sortOptions={TRACK_SORT_OPTIONS}
             bind:sortColumn
             bind:sortDirection

@@ -157,23 +157,30 @@ impl TrackRepository {
 
     pub fn search(&self, query: &str) -> SqliteResult<Vec<Track>> {
         let conn = self.conn.lock().unwrap();
-        let pattern = format!("%{}%", query);
+        
+        let fts_query = query
+            .split_whitespace()
+            .filter(|w| !w.is_empty())
+            .map(|w| format!("\"{}\"*", w.replace('"', "\"\"")))
+            .collect::<Vec<_>>()
+            .join(" ");
+
+        if fts_query.is_empty() {
+            return Ok(vec![]);
+        }
 
         let sql = format!(
-            "{} WHERE t.title LIKE ?1
-                OR al.name LIKE ?1
-                OR t.id IN (
-                    SELECT ta2.track_id FROM track_artists ta2
-                    JOIN artists ar2 ON ar2.id = ta2.artist_id
-                    WHERE ar2.name LIKE ?1
-                )
+            "{} WHERE t.id IN (
+                SELECT id FROM tracks_fts5 
+                WHERE tracks_fts5 MATCH ?1
+            )
              GROUP BY t.id
              ORDER BY artists, al.name, t.track_number",
             TRACK_SELECT
         );
 
         let mut stmt = conn.prepare(&sql)?;
-        let tracks = stmt.query_map([&pattern], row_to_track)?;
+        let tracks = stmt.query_map([&fts_query], row_to_track)?;
         tracks.collect()
     }
 
@@ -186,49 +193,36 @@ impl TrackRepository {
         sort_dir: Option<&str>,
     ) -> SqliteResult<PaginatedTracks> {
         let conn = self.conn.lock().unwrap();
-        let pattern = format!("%{}%", query);
+        
+        let fts_query = query
+            .split_whitespace()
+            .filter(|w| !w.is_empty())
+            .map(|w| format!("\"{}\"*", w.replace('"', "\"\"")))
+            .collect::<Vec<_>>()
+            .join(" ");
+
+        if fts_query.is_empty() {
+            return Ok(PaginatedTracks { tracks: vec![], total: 0 });
+        }
 
         let total: i64 = conn.query_row(
-            "SELECT COUNT(DISTINCT t.id) FROM tracks t
-             LEFT JOIN albums al ON al.id = t.album_id
-             LEFT JOIN track_artists ta2 ON ta2.track_id = t.id
-             LEFT JOIN artists ar2 ON ar2.id = ta2.artist_id
-             WHERE t.title LIKE ?1
-                OR al.name LIKE ?1
-                OR ar2.name LIKE ?1",
-            [&pattern],
+            "SELECT COUNT(*) FROM tracks_fts5 WHERE tracks_fts5 MATCH ?1",
+            [&fts_query],
             |row| row.get(0),
         )?;
 
         let base_sort = super::get_track_sort_clause(sort_column, sort_dir);
         let sort_clause = if sort_column.is_none() {
-            format!(
-                "ORDER BY 
-                    CASE 
-                        WHEN t.title LIKE ?1 THEN 0
-                        WHEN al.name LIKE ?1 THEN 1
-                        WHEN t.id IN (
-                            SELECT ta3.track_id FROM track_artists ta3
-                            JOIN artists ar3 ON ar3.id = ta3.artist_id
-                            JOIN albums al2 ON al2.id = t.album_id
-                            WHERE ar3.name LIKE ?1 AND al2.artist_id = ar3.id
-                        ) THEN 2
-                        ELSE 3
-                    END,
-                    artists, al.name, t.track_number"
-            )
+            "ORDER BY rank".to_string()
         } else {
             base_sort
         };
 
         let sql = format!(
-            "{} WHERE t.title LIKE ?1
-                OR al.name LIKE ?1
-                OR t.id IN (
-                    SELECT ta2.track_id FROM track_artists ta2
-                    JOIN artists ar2 ON ar2.id = ta2.artist_id
-                    WHERE ar2.name LIKE ?1
-                )
+            "{} WHERE t.id IN (
+                SELECT id FROM tracks_fts5 
+                WHERE tracks_fts5 MATCH ?1
+            )
              GROUP BY t.id
              {}
              LIMIT ?2 OFFSET ?3",
@@ -237,7 +231,7 @@ impl TrackRepository {
 
         let mut stmt = conn.prepare(&sql)?;
         let tracks: Vec<Track> = stmt
-            .query_map(rusqlite::params![&pattern, limit, offset], row_to_track)?
+            .query_map(rusqlite::params![&fts_query, limit, offset], row_to_track)?
             .collect::<SqliteResult<Vec<_>>>()?;
 
         Ok(PaginatedTracks { tracks, total })

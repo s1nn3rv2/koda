@@ -72,7 +72,7 @@ fn create_schema(conn: &Connection) -> SqliteResult<()> {
             artist_id TEXT NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
             PRIMARY KEY (track_id, artist_id)
         );
-        
+
         CREATE TABLE IF NOT EXISTS album_artists (
             album_id TEXT NOT NULL REFERENCES albums(id) ON DELETE CASCADE,
             artist_id TEXT NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
@@ -81,6 +81,92 @@ fn create_schema(conn: &Connection) -> SqliteResult<()> {
     )?;
 
     create_indices(conn)?;
+    create_fts5_schema(conn)?;
+    Ok(())
+}
+
+fn create_fts5_schema(conn: &Connection) -> SqliteResult<()> {
+    conn.execute_batch(
+        "CREATE VIRTUAL TABLE IF NOT EXISTS tracks_fts5 USING fts5(
+            id UNINDEXED,
+            title,
+            album,
+            artists
+        );
+
+        DROP TRIGGER IF EXISTS tracks_ai;
+        DROP TRIGGER IF EXISTS tracks_ad;
+        DROP TRIGGER IF EXISTS tracks_au;
+        DROP TRIGGER IF EXISTS track_artists_ai;
+        DROP TRIGGER IF EXISTS track_artists_ad;
+        DROP TRIGGER IF EXISTS albums_au;
+
+        CREATE TRIGGER tracks_ai AFTER INSERT ON tracks BEGIN
+            INSERT INTO tracks_fts5(id, title, album, artists)
+            SELECT
+                new.id,
+                new.title,
+                (SELECT name FROM albums WHERE id = new.album_id),
+                NULL
+            ;
+        END;
+
+        CREATE TRIGGER tracks_ad AFTER DELETE ON tracks BEGIN
+            DELETE FROM tracks_fts5 WHERE id = old.id;
+        END;
+
+        CREATE TRIGGER tracks_au AFTER UPDATE ON tracks BEGIN
+            UPDATE tracks_fts5 SET
+                title = new.title,
+                album = (SELECT name FROM albums WHERE id = new.album_id)
+            WHERE id = new.id;
+        END;
+
+        CREATE TRIGGER track_artists_ai AFTER INSERT ON track_artists BEGIN
+            UPDATE tracks_fts5
+            SET artists = (
+                SELECT GROUP_CONCAT(a.name, ' ')
+                FROM artists a
+                JOIN track_artists ta ON ta.artist_id = a.id
+                WHERE ta.track_id = new.track_id
+            )
+            WHERE id = new.track_id;
+        END;
+
+        CREATE TRIGGER track_artists_ad AFTER DELETE ON track_artists BEGIN
+            UPDATE tracks_fts5
+            SET artists = (
+                SELECT GROUP_CONCAT(a.name, ' ')
+                FROM artists a
+                JOIN track_artists ta ON ta.artist_id = a.id
+                WHERE ta.track_id = old.track_id
+            )
+            WHERE id = old.track_id;
+        END;
+
+        CREATE TRIGGER albums_au AFTER UPDATE OF name ON albums BEGIN
+            UPDATE tracks_fts5
+            SET album = new.name
+            WHERE id IN (SELECT id FROM tracks WHERE album_id = new.id);
+        END;
+
+        INSERT INTO tracks_fts5(id, title, album, artists)
+        SELECT
+            t.id,
+            t.title,
+            al.name,
+            (SELECT GROUP_CONCAT(ar.name, ' ') FROM artists ar JOIN track_artists ta ON ta.artist_id = ar.id WHERE ta.track_id = t.id)
+        FROM tracks t
+        LEFT JOIN albums al ON al.id = t.album_id
+        WHERE t.id NOT IN (SELECT id FROM tracks_fts5);
+
+        UPDATE tracks_fts5 SET artists = (
+            SELECT GROUP_CONCAT(ar.name, ' ')
+            FROM artists ar
+            JOIN track_artists ta ON ta.artist_id = ar.id
+            WHERE ta.track_id = tracks_fts5.id
+        ) WHERE artists IS NULL OR artists = '';"
+    )?;
     Ok(())
 }
 
@@ -95,7 +181,8 @@ pub fn create_indices(conn: &Connection) -> SqliteResult<()> {
          CREATE INDEX IF NOT EXISTS idx_album_artists_artist ON album_artists(artist_id);
          CREATE INDEX IF NOT EXISTS idx_artists_name ON artists(name);
          CREATE INDEX IF NOT EXISTS idx_albums_name ON albums(name);
-         CREATE INDEX IF NOT EXISTS idx_genres_name ON genres(name);",
+         CREATE INDEX IF NOT EXISTS idx_genres_name ON genres(name);
+         CREATE INDEX IF NOT EXISTS idx_tracks_title ON tracks(title COLLATE NOCASE);",
     )?;
 
     Ok(())
@@ -112,7 +199,8 @@ pub fn drop_indices(conn: &Connection) -> SqliteResult<()> {
          DROP INDEX IF EXISTS idx_album_artists_artist;
          DROP INDEX IF EXISTS idx_artists_name;
          DROP INDEX IF EXISTS idx_albums_name;
-         DROP INDEX IF EXISTS idx_genres_name;",
+         DROP INDEX IF EXISTS idx_genres_name;
+         DROP INDEX IF EXISTS idx_tracks_title;",
     )?;
 
     Ok(())

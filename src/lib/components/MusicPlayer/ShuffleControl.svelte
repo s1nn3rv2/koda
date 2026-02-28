@@ -1,6 +1,7 @@
 <script lang="ts">
     import { Shuffle } from "@lucide/svelte";
     import { queueState, uiState } from "$lib/state/player.svelte";
+    import Tooltip from "../Tooltip.svelte";
 
     const isSmart = $derived(queueState.shuffleMode === "smart");
     const isCategory = $derived(queueState.shuffleMode === "category");
@@ -46,10 +47,6 @@
             </span>
         {/if}
 
-        <div
-            class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-surface-elevated border border-white/10 rounded text-[10px] font-medium text-text-primary opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl"
-        >
-            Shuffle: {modeText}
-        </div>
+        <Tooltip text={`Shuffle: ${modeText}`} />
     </button>
 </div>

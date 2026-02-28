@@ -1,9 +1,13 @@
 <script lang="ts">
     import { playbackState, uiState } from "$lib/state/player.svelte";
+    import { lyricsState } from "$lib/state/lyrics.svelte";
     import TrackInfo from "./TrackInfo.svelte";
     import Controls from "./Controls.svelte";
     import Volume from "./Volume.svelte";
     import ShuffleControl from "./ShuffleControl.svelte";
+    import LyricsView from "./LyricsView.svelte";
+    import Tooltip from "../Tooltip.svelte";
+    import { MicVocal } from "@lucide/svelte";
 
     const defaultColor = "99, 102, 241";
 
@@ -63,7 +67,33 @@
             class="hidden sm:flex items-center justify-end flex-shrink-0 transition-all duration-300 sm:w-auto sm:flex-1 gap-4"
         >
             <ShuffleControl />
+            <div class="flex items-center gap-1">
+                <button
+                    class="group relative flex items-center justify-center rounded-full p-2 transition-all duration-300
+                    {uiState.showLyrics
+                        ? 'text-indigo-400 bg-indigo-500/10'
+                        : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'}"
+                    onclick={() => uiState.toggleLyrics()}
+                    aria-label="Toggle Lyrics"
+                >
+                    <MicVocal size={16} />
+
+                    {#if lyricsState.syncedLyrics}
+                        <span
+                            class="absolute top-0 right-0 w-1.5 h-1.5 rounded-full bg-indigo-400 shadow-[0_0_8px_rgba(129,140,248,0.5)]"
+                        ></span>
+                    {/if}
+
+                    <Tooltip
+                        text={uiState.showLyrics
+                            ? "Hide Lyrics"
+                            : "Show Lyrics"}
+                    />
+                </button>
+            </div>
             <Volume />
         </div>
     </div>
 </footer>
+
+<LyricsView />

@@ -141,8 +141,11 @@ pub fn run() {
             library::import_downloaded_track,
             library::write_file_bytes,
             library::get_subdirectories,
+            library::get_embedded_lyrics,
+            library::embed_lyrics,
             sources::metadata::fetch_artist_metadata,
             sources::metadata::fetch_album_metadata,
+            sources::lrclib::fetch_lyrics,
             // music player
             music_player::play_file,
             music_player::get_current_track,
