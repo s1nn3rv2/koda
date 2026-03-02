@@ -12,7 +12,7 @@
     import { settingsState } from "$lib/state/settings.svelte";
     import { downloadState } from "$lib/state/download.svelte";
     import LibrarySourceSelector from "./LibrarySourceSelector.svelte";
-    import DownloadProgress from "./DownloadProgress.svelte";
+    import DownloadProgress from "./Modals/DownloadProgress.svelte";
 
     interface Props {
         onreload: () => void;

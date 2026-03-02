@@ -14,7 +14,7 @@
         SortDirection,
     } from "$lib/types";
     import type { ContextMenuItem } from "$lib/state/context_menu.svelte";
-    import TrackList from "../TrackList.svelte";
+    import TrackList from "../Track/TrackList.svelte";
     import ContentHeader from "../ContentHeader.svelte";
     import AlbumCard from "../AlbumCard.svelte";
     import SortDropdown from "../SortDropdown.svelte";

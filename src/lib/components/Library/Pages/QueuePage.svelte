@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Trash2 } from "@lucide/svelte";
     import { queueState } from "$lib/state/player.svelte";
-    import TrackList from "../TrackList.svelte";
+    import TrackList from "../Track/TrackList.svelte";
 
     interface Props {
         ondelete: (id: string) => void;

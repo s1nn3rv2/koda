@@ -3,9 +3,9 @@
     import { uiState } from "$lib/state/player.svelte";
     import LibraryHeader from "$lib/components/Library/LibraryHeader.svelte";
     import SidebarSection from "$lib/components/Library/SidebarSection.svelte";
-    import MainSection from "$lib/components/Library/MainSection.svelte";
-    import TagEditorModal from "$lib/components/Library/TagEditorModal.svelte";
-    import ImportModal from "$lib/components/Library/ImportModal.svelte";
+    import MainSection from "$lib/components/Library/Views/MainSection.svelte";
+    import TagEditorModal from "$lib/components/Library/Modals/TagEditorModal.svelte";
+    import ImportModal from "$lib/components/Library/Modals/ImportModal.svelte";
     import { onMount } from "svelte";
     import { PanelLeft } from "@lucide/svelte";
     import { fly, fade, scale, crossfade } from "svelte/transition";
@@ -36,7 +36,7 @@
     });
 </script>
 
-<main class="flex flex-col h-screen">
+<main class="flex flex-col h-full overflow-hidden">
     <LibraryHeader onreload={handleReload} {send} {receive} />
 
     <div class="flex flex-1 min-h-0 px-8 gap-0 overflow-hidden relative">

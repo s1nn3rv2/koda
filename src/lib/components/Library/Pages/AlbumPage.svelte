@@ -5,7 +5,7 @@
     import type { ContextMenuItem } from "$lib/state/context_menu.svelte";
     import { RefreshCw } from "@lucide/svelte";
     import { pluralize, formatDate } from "$lib/utils/format";
-    import TrackList from "../TrackList.svelte";
+    import TrackList from "../Track/TrackList.svelte";
     import ContentHeader from "../ContentHeader.svelte";
     import { queueState } from "$lib/state/player.svelte";
 

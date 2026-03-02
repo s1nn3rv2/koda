@@ -13,7 +13,7 @@ class SettingsState {
   monochromeInstance = $state(
     browser
       ? localStorage.getItem("monochrome_instance") ||
-          "https://api.monochrome.tf"
+      "https://api.monochrome.tf"
       : "https://api.monochrome.tf",
   );
   audioQuality = $state<AudioQuality>(
@@ -24,7 +24,7 @@ class SettingsState {
   downloadQuality = $state<AudioQuality>(
     browser
       ? (localStorage.getItem("download_quality") as AudioQuality) ||
-          "HI_RES_LOSSLESS"
+      "HI_RES_LOSSLESS"
       : "HI_RES_LOSSLESS",
   );
   musicPaths = $state<string[]>(
@@ -35,6 +35,15 @@ class SettingsState {
   );
   lastImportFolder = $state(
     browser ? localStorage.getItem("last_import_folder") || "" : "",
+  );
+  enableMusicBrainz = $state(
+    browser ? localStorage.getItem("enable_musicbrainz") !== "false" : true
+  );
+  enableITunes = $state(
+    browser ? localStorage.getItem("enable_itunes") !== "false" : true
+  );
+  enableLrclib = $state(
+    browser ? localStorage.getItem("enable_lrclib") !== "false" : true
   );
 
   dynamicInstances = $state<MonochromeInstance[]>([]);
@@ -50,6 +59,9 @@ class SettingsState {
           localStorage.setItem("music_paths", JSON.stringify(this.musicPaths));
           localStorage.setItem("last_import_genre", this.lastImportGenre);
           localStorage.setItem("last_import_folder", this.lastImportFolder);
+          localStorage.setItem("enable_musicbrainz", String(this.enableMusicBrainz));
+          localStorage.setItem("enable_itunes", String(this.enableITunes));
+          localStorage.setItem("enable_lrclib", String(this.enableLrclib));
         }
       });
     });

@@ -6,10 +6,11 @@
     } from "@lucide/svelte";
     import GeneralSettings from "./views/GeneralSettings.svelte";
     import MonochromeSettings from "./views/MonochromeSettings.svelte";
+    import ThirdPartySettings from "./views/ThirdPartySettings.svelte";
     import { open } from "@tauri-apps/plugin-dialog";
     import { fade, scale } from "svelte/transition";
 
-    let activeTab = $state<"koda" | "monochrome">("koda");
+    let activeTab = $state<"koda" | "monochrome" | "thirdparty">("koda");
 
     $effect(() => {
         if (settingsState.isSettingsOpen) {
@@ -103,6 +104,20 @@
                             ></div>
                         {/if}
                     </button>
+                    <button
+                        class="pb-3 text-sm font-bold transition-colors relative {activeTab ===
+                        'thirdparty'
+                            ? 'text-white'
+                            : 'text-gray-500 hover:text-gray-300'}"
+                        onclick={() => (activeTab = "thirdparty")}
+                    >
+                        3rd Party
+                        {#if activeTab === "thirdparty"}
+                            <div
+                                class="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500 rounded-t-full"
+                            ></div>
+                        {/if}
+                    </button>
                 </div>
             </div>
 
@@ -111,6 +126,8 @@
                     <GeneralSettings />
                 {:else if activeTab === "monochrome"}
                     <MonochromeSettings />
+                {:else if activeTab === "thirdparty"}
+                    <ThirdPartySettings />
                 {/if}
             </div>
 

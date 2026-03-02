@@ -144,7 +144,10 @@
                     coverCache.set(cacheKey, url);
                 }
             } else if (trackId) {
-                const base64Data = await TauriService.getCoverArt(trackId, size);
+                const base64Data = await TauriService.getCoverArt(
+                    trackId,
+                    size,
+                );
                 if (base64Data) {
                     const dataUrl = `data:image/jpeg;base64,${base64Data}`;
                     coverUrl = dataUrl;
@@ -169,14 +172,16 @@
     {oncontextmenu}
     role="img"
     class={`overflow-hidden bg-surface-base ${className} transition-colors duration-300`}
+    style="content-visibility: auto; contain-intrinsic-size: {size}px;"
 >
     {#if coverUrl}
-        <img
-            src={coverUrl}
-            {alt}
-            class="h-full w-full object-cover animate-in fade-in duration-500"
-            loading="lazy"
-        />
+        <!-- div seems to slightly improve the performance over img? -->
+        <div
+            class="h-full w-full bg-cover bg-center transform-gpu animate-in fade-in duration-500"
+            style="background-image: url('{coverUrl}');"
+            role="img"
+            aria-label={alt}
+        ></div>
     {:else if isLoading}
         <div
             class="flex h-full w-full items-center justify-center text-text-dim/20"

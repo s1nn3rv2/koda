@@ -36,6 +36,7 @@ pub(crate) struct PlayerInnerState {
     pub seek_offset: f64,
     pub is_paused: bool,
     pub paused_position: f64,
+    pub volume: f32,
 }
 
 impl Default for PlayerInnerState {
@@ -48,6 +49,7 @@ impl Default for PlayerInnerState {
             seek_offset: 0.0,
             is_paused: false,
             paused_position: 0.0,
+            volume: 0.5,
         }
     }
 }

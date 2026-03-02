@@ -11,15 +11,15 @@
     import { libraryState } from "$lib/state/library.svelte";
     import { TauriService } from "$lib/utils/tauri";
     import { TRACK_SORT_OPTIONS } from "$lib/constants/sortOptions";
-    import AllTracksPage from "./Pages/AllTracksPage.svelte";
-    import AlbumPage from "./Pages/AlbumPage.svelte";
-    import ArtistPage from "./Pages/ArtistPage.svelte";
-    import GenrePage from "./Pages/GenrePage.svelte";
-    import QueuePage from "./Pages/QueuePage.svelte";
-    import SearchResultsView from "./SearchResultsView.svelte";
+    import AllTracksPage from "../Pages/AllTracksPage.svelte";
+    import AlbumPage from "../Pages/AlbumPage.svelte";
+    import ArtistPage from "../Pages/ArtistPage.svelte";
+    import GenrePage from "../Pages/GenrePage.svelte";
+    import QueuePage from "../Pages/QueuePage.svelte";
+    import SearchResultsView from "../SearchResultsView.svelte";
     import OnlinePlaceholder from "./OnlinePlaceholder.svelte";
 
-    const PAGE_SIZE = 50;
+    const PAGE_SIZE = 250;
 
     let sortColumn = $state<SortColumn>(
         libraryState.selection.type === "all"
@@ -376,7 +376,7 @@
 
 <section
     bind:this={sectionElement}
-    class="flex-1 min-w-0 overflow-y-auto pb-24"
+    class="flex-1 min-w-0 overflow-y-auto pb-24 scroll-auto"
 >
     {#if errorMsg}
         <div class="mb-4">

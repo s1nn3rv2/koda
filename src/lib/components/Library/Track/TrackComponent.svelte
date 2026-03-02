@@ -134,9 +134,6 @@
     class="{compact
         ? 'py-2 px-4 flex items-center gap-4'
         : 'p-3 flex flex-col gap-1.5'} bg-surface-base border border-transparent rounded-xl group relative hover:bg-surface-hover hover:border-surface-border transition-colors duration-200"
-    style="content-visibility: auto; contain-intrinsic-size: auto {compact
-        ? '56px'
-        : '220px'};"
     oncontextmenu={handleContextMenu}
     role="button"
     tabindex="0"

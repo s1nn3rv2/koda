@@ -12,7 +12,7 @@ export function createVirtualizer(options: {
     const totalRows = $derived(Math.ceil(options.itemsCount() / options.itemsPerRow()));
     const totalHeight = $derived(totalRows * options.rowHeight());
 
-    const overscan = options.overscan ?? 2;
+    const overscan = options.overscan ?? 4;
 
     const visibleRows = $derived.by(() => {
         const start = Math.max(0, Math.floor(scrollTop / options.rowHeight()) - overscan);
@@ -74,6 +74,6 @@ export function createVirtualizer(options: {
         get totalHeight() { return totalHeight; },
         get visibleRange() { return visibleRange; },
         get translateY() { return translateY; },
-        get isAtBottom() { return visibleRows.end >= totalRows - 1; }
+        get isAtBottom() { return visibleRows.end >= totalRows - 8; }
     };
 }

@@ -11,6 +11,7 @@ import type {
   SortColumn,
   SortDirection,
 } from "$lib/types";
+import { settingsState } from "$lib/state/settings.svelte";
 
 export interface ScanProgress {
   current: number;
@@ -305,16 +306,36 @@ export class TauriService {
 
   static async fetchArtistMetadata(
     artistId: string,
-    provider: "musicbrainz" | "itunes" | "auto" = "auto",
+    provider: "musicbrainz" | "itunes" | "auto" | "none" = "auto",
   ): Promise<string | null> {
+    if (provider === "auto") {
+      if (settingsState.enableMusicBrainz && settingsState.enableITunes) provider = "auto";
+      else if (settingsState.enableMusicBrainz) provider = "musicbrainz";
+      else if (settingsState.enableITunes) provider = "itunes";
+      else provider = "none";
+    } else if (provider === "musicbrainz" && !settingsState.enableMusicBrainz) {
+      provider = "none";
+    } else if (provider === "itunes" && !settingsState.enableITunes) {
+      provider = "none";
+    }
     return invoke("fetch_artist_metadata", { artistId, provider });
   }
 
   static async fetchAlbumMetadata(
     albumId: string,
-    provider: "musicbrainz" | "itunes" | "auto" = "auto",
+    provider: "musicbrainz" | "itunes" | "auto" | "none" = "auto",
     force: boolean = false,
   ): Promise<[string | null, string | null]> {
+    if (provider === "auto") {
+      if (settingsState.enableMusicBrainz && settingsState.enableITunes) provider = "auto";
+      else if (settingsState.enableMusicBrainz) provider = "musicbrainz";
+      else if (settingsState.enableITunes) provider = "itunes";
+      else provider = "none";
+    } else if (provider === "musicbrainz" && !settingsState.enableMusicBrainz) {
+      provider = "none";
+    } else if (provider === "itunes" && !settingsState.enableITunes) {
+      provider = "none";
+    }
     return invoke("fetch_album_metadata", { albumId, provider, force });
   }
 
@@ -324,6 +345,7 @@ export class TauriService {
     albumName: string | null = null,
     duration: number | null = null,
   ): Promise<any> {
+    if (!settingsState.enableLrclib) return null;
     return invoke("fetch_lyrics", {
       trackName,
       artistName,

@@ -86,8 +86,6 @@
         }
     });
 
-
-
     $effect(() => {
         if (dl) {
             untrack(() => {
@@ -102,7 +100,11 @@
                 genre = settingsState.lastImportGenre || dl.track.genre || "";
                 releaseDate = dl.track.release_date || "";
 
-                if (initAlbum === initTitle && initTrackNum === 1 && initDiscNum === 1) {
+                if (
+                    initAlbum === initTitle &&
+                    initTrackNum === 1 &&
+                    initDiscNum === 1
+                ) {
                     album = "";
                     albumArtist = "";
                     trackNumber = null;

@@ -145,9 +145,12 @@
     }
 
     const rowHeight = $derived.by(() => {
-        if (layout === "list") return 60;
-        const itemWidth = containerWidth / itemsPerRow;
-        return itemWidth + 66;
+        if (layout === "list") return 60; // 56px intrinsic height + 4px gap
+
+        const totalGapWidth = (itemsPerRow - 1) * 16;
+        const itemWidth = (containerWidth - totalGapWidth) / itemsPerRow;
+
+        return itemWidth + 66 + 16; // image width + text height + 16px row gap
     });
 
     const virtualizer = createVirtualizer({

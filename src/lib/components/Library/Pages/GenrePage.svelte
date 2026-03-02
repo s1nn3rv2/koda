@@ -6,7 +6,7 @@
         SortDirection,
     } from "$lib/types";
     import { TRACK_SORT_OPTIONS } from "$lib/constants/sortOptions";
-    import TrackList from "../TrackList.svelte";
+    import TrackList from "../Track/TrackList.svelte";
     import ContentHeader from "../ContentHeader.svelte";
     import SortDropdown from "../SortDropdown.svelte";
 

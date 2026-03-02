@@ -46,14 +46,13 @@
         size={128}
     />
 
-    <!-- Hover Overlay -->
     <div
-        class="absolute inset-0 transition-opacity duration-500 flex items-end justify-end gap-2 p-2 rounded-lg {isActuallyPlaying
+        class="absolute inset-0 transition-opacity duration-500 flex items-end justify-end gap-2 p-2 rounded-lg will-change-[transform,opacity] transform-gpu pointer-events-none {isActuallyPlaying
             ? 'opacity-100 bg-black/30'
             : 'opacity-0 group-hover:opacity-100 bg-black/20'}"
     >
         <button
-            class="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center hover:bg-white/30 hover:scale-110 transition-all"
+            class="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center hover:bg-white/30 hover:scale-110 transition-all pointer-events-auto"
             onclick={(e) => {
                 e.stopPropagation();
                 queueState.addToQueue(track);
@@ -64,7 +63,7 @@
         </button>
         <PlayPauseButton
             isPlaying={isActuallyPlaying}
-            class="w-10 h-10 bg-brand-primary text-text-primary hover:bg-brand-secondary"
+            class="w-10 h-10 bg-brand-primary text-text-primary hover:bg-brand-secondary pointer-events-auto"
             onclick={(e) => {
                 e.stopPropagation();
                 if (isActive) {

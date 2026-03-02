@@ -21,6 +21,7 @@ pub enum MetadataProvider {
     MusicBrainz,
     ITunes,
     Auto,
+    None,
 }
 
 impl From<Option<String>> for MetadataProvider {
@@ -28,6 +29,7 @@ impl From<Option<String>> for MetadataProvider {
         match s.as_deref() {
             Some("musicbrainz") => MetadataProvider::MusicBrainz,
             Some("itunes") => MetadataProvider::ITunes,
+            Some("none") => MetadataProvider::None,
             _ => MetadataProvider::Auto,
         }
     }

@@ -5,7 +5,7 @@
     import { pluralize } from "$lib/utils/format";
     import type { Track, SortColumn, SortDirection } from "$lib/types";
     import type { SortOption } from "$lib/constants/sortOptions";
-    import TrackList from "./TrackList.svelte";
+    import TrackList from "./Track/TrackList.svelte";
     import ContentHeader from "./ContentHeader.svelte";
     import SortDropdown from "./SortDropdown.svelte";
 

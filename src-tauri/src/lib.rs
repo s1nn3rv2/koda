@@ -23,39 +23,39 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .register_uri_scheme_protocol("library-asset", move |app, request| {
             let uri = request.uri().path();
-            let parts: Vec<&str> = uri.split('/').filter(|s| !s.is_empty()).collect();
+                let parts: Vec<&str> = uri.split('/').filter(|s| !s.is_empty()).collect();
 
-            if parts.len() >= 2 {
-                let hash = parts[0];
-                let size = parts[1];
+                if parts.len() >= 2 {
+                    let hash = parts[0];
+                    let size = parts[1];
 
                 if let Ok(app_data_dir) = app.app_handle().path().app_data_dir() {
-                    let cover_arts_dir = app_data_dir.join("cache").join("cover_arts");
+                        let cover_arts_dir = app_data_dir.join("cache").join("cover_arts");
 
-                    let mut file_path = cover_arts_dir.join(format!("{}_{}.jpg", hash, size));
+                        let mut file_path = cover_arts_dir.join(format!("{}_{}.jpg", hash, size));
 
-                    if !file_path.exists() {
-                        file_path = cover_arts_dir.join(format!("{}_thumb.jpg", hash));
-                    }
+                        if !file_path.exists() {
+                            file_path = cover_arts_dir.join(format!("{}_thumb.jpg", hash));
+                        }
 
-                    if !file_path.exists() {
-                        file_path = cover_arts_dir.join(format!("{}_128.jpg", hash));
-                    }
+                        if !file_path.exists() {
+                            file_path = cover_arts_dir.join(format!("{}_128.jpg", hash));
+                        }
 
                     if let Ok(data) = std::fs::read(file_path) {
                         return tauri::http::Response::builder()
-                            .header("Content-Type", "image/jpeg")
-                            .header("Cache-Control", "public, max-age=31536000, immutable")
-                            .body(data)
+                                    .header("Content-Type", "image/jpeg")
+                                    .header("Cache-Control", "public, max-age=31536000, immutable")
+                                    .body(data)
                             .unwrap();
+                        }
                     }
                 }
-            }
 
-            tauri::http::Response::builder()
-                .status(404)
-                .body(Vec::new())
-                .unwrap()
+                    tauri::http::Response::builder()
+                        .status(404)
+                        .body(Vec::new())
+                        .unwrap()
         })
         .setup(|app| {
             let cache_manager = Arc::new(
