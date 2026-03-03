@@ -29,7 +29,7 @@ class LibraryState {
 
   allTracksSortColumn = $state<SortColumn>(
     (localStorage.getItem("allTracksSortColumn") as SortColumn) ||
-    "release_date",
+      "release_date",
   );
   allTracksSortDirection = $state<SortDirection>(
     (localStorage.getItem("allTracksSortDirection") as SortDirection) || "desc",
@@ -48,11 +48,22 @@ class LibraryState {
     this.setupListeners();
 
     if (typeof window !== "undefined") {
-      history.replaceState({ selection: $state.snapshot(this.selection) }, "");
+      history.replaceState(
+        {
+          ...(history.state || {}),
+          selection: $state.snapshot(this.selection),
+        },
+        "",
+      );
+
+      const initialSelection = $state.snapshot(this.selection);
 
       window.addEventListener("popstate", (e) => {
         if (e.state?.selection) {
           this.selection = e.state.selection;
+        } else {
+          // svelte seems to overwrite initial state
+          this.selection = initialSelection;
         }
       });
     }
@@ -125,7 +136,14 @@ class LibraryState {
       }
 
       if (!isSame) {
-        history.pushState({ selection: sel }, "");
+        history.replaceState(
+          { ...(history.state || {}), selection: $state.snapshot(current) },
+          "",
+        );
+        history.pushState(
+          { ...(history.state || {}), selection: $state.snapshot(sel) },
+          "",
+        );
       }
     }
 
