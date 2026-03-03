@@ -64,7 +64,16 @@ class DownloadState {
 
         try {
             const onlineId = parseInt(track.id.split(":")[1]);
-            const response = await fetch(`${settingsState.monochromeInstance}/track/?id=${onlineId}&quality=${settingsState.downloadQuality}`);
+            let currentQuality = settingsState.downloadQuality;
+            let response = await fetch(`${settingsState.monochromeInstance}/track/?id=${onlineId}&quality=${currentQuality}`);
+
+            // fallback to lossless from hi-res, as i saw some tracks seem to not have hi-res available all the time
+            if (!response.ok && currentQuality === 'HI_RES_LOSSLESS' && response.status === 404) {
+                console.warn(`Hi-Res not found for track ${onlineId}, falling back to LOSSLESS`);
+                currentQuality = 'LOSSLESS';
+                dl.quality = currentQuality;
+                response = await fetch(`${settingsState.monochromeInstance}/track/?id=${onlineId}&quality=${currentQuality}`);
+            }
 
             if (!response.ok) throw new Error(`Failed to get track info: ${response.statusText}`);
             const data = await response.json();

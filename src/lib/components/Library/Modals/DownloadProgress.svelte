@@ -104,7 +104,6 @@
                         {/if}
                     </div>
                 </div>
-                <p>{progress}</p>
                 {#if dl.total > 0}
                     <div
                         class="mt-2.5 w-full bg-white/5 rounded-full h-1.5 overflow-hidden"
