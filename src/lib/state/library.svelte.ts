@@ -1,3 +1,5 @@
+import { pushState, replaceState } from "$app/navigation";
+import { page } from "$app/state";
 import { TauriService, type ScanProgress } from "$lib/utils/tauri";
 import type {
   ArtistWithCount,
@@ -29,7 +31,7 @@ class LibraryState {
 
   allTracksSortColumn = $state<SortColumn>(
     (localStorage.getItem("allTracksSortColumn") as SortColumn) ||
-      "release_date",
+    "release_date",
   );
   allTracksSortDirection = $state<SortDirection>(
     (localStorage.getItem("allTracksSortDirection") as SortDirection) || "desc",
@@ -48,43 +50,39 @@ class LibraryState {
     this.setupListeners();
 
     if (typeof window !== "undefined") {
-      history.replaceState(
-        {
-          ...(history.state || {}),
-          selection: $state.snapshot(this.selection),
-        },
-        "",
-      );
-
       const initialSelection = $state.snapshot(this.selection);
 
-      window.addEventListener("popstate", (e) => {
-        if (e.state?.selection) {
-          this.selection = e.state.selection;
-        } else {
-          // svelte seems to overwrite initial state
-          this.selection = initialSelection;
-        }
+      $effect.root(() => {
+        let isInitialized = false;
+        $effect(() => {
+          const routerState = (page.state as Record<string, any>)?.selection as Selection | undefined;
+
+          if (routerState) {
+            this.selection = routerState;
+          } else if (isInitialized) {
+            this.selection = initialSelection;
+          }
+
+          isInitialized = true;
+        });
+
+        $effect(() => {
+          localStorage.setItem(
+            "library_selection",
+            JSON.stringify(this.selection),
+          );
+          localStorage.setItem(
+            "library_scroll_positions",
+            JSON.stringify(this.scrollPositions),
+          );
+          localStorage.setItem(
+            "library_sort_modes",
+            JSON.stringify(this.sortModes),
+          );
+          localStorage.setItem("search_query", this.searchQuery);
+        });
       });
     }
-
-    $effect.root(() => {
-      $effect(() => {
-        localStorage.setItem(
-          "library_selection",
-          JSON.stringify(this.selection),
-        );
-        localStorage.setItem(
-          "library_scroll_positions",
-          JSON.stringify(this.scrollPositions),
-        );
-        localStorage.setItem(
-          "library_sort_modes",
-          JSON.stringify(this.sortModes),
-        );
-        localStorage.setItem("search_query", this.searchQuery);
-      });
-    });
   }
 
   async setupListeners() {
@@ -136,14 +134,13 @@ class LibraryState {
       }
 
       if (!isSame) {
-        history.replaceState(
-          { ...(history.state || {}), selection: $state.snapshot(current) },
-          "",
-        );
-        history.pushState(
-          { ...(history.state || {}), selection: $state.snapshot(sel) },
-          "",
-        );
+        replaceState(location.href, {
+          selection: $state.snapshot(current),
+        });
+
+        pushState(location.href, {
+          selection: $state.snapshot(sel),
+        });
       }
     }
 
