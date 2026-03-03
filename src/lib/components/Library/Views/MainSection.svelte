@@ -155,14 +155,17 @@
             errorMsg = String(e);
         } finally {
             isLoadingContent = false;
+
+            // wait for dom to prevent abrupt changes
+            await import("svelte").then((m) => m.tick());
+
             const savedScroll =
                 libraryState.scrollPositions[
                     getSelectionKey(libraryState.selection)
                 ] || 0;
-            if (sectionElement)
-                setTimeout(() => {
-                    if (sectionElement) sectionElement.scrollTop = savedScroll;
-                }, 50);
+            if (sectionElement) {
+                sectionElement.scrollTop = savedScroll;
+            }
         }
     }
 
@@ -254,8 +257,12 @@
     }
 
     export function handleTrackUpdated(updatedTrack: Track) {
-        contentTracks = contentTracks.map(t => t.id === updatedTrack.id ? updatedTrack : t);
-        searchResults = searchResults.map(t => t.id === updatedTrack.id ? updatedTrack : t);
+        contentTracks = contentTracks.map((t) =>
+            t.id === updatedTrack.id ? updatedTrack : t,
+        );
+        searchResults = searchResults.map((t) =>
+            t.id === updatedTrack.id ? updatedTrack : t,
+        );
     }
 
     async function handleArtistClick(name: string) {
@@ -319,14 +326,24 @@
         void sortColumn;
         void sortDirection;
         const currentSelection = libraryState.selection;
+
+        const previousScrollPosition = sectionElement
+            ? sectionElement.scrollTop
+            : 0;
+        const previousKey = getSelectionKey(currentSelection);
+
         untrack(() => {
             loadContent();
         });
+
         return () => {
-            if (sectionElement)
-                libraryState.scrollPositions[
-                    getSelectionKey(currentSelection)
-                ] = sectionElement.scrollTop;
+            if (sectionElement) {
+                libraryState.scrollPositions[previousKey] =
+                    sectionElement.scrollTop;
+            } else {
+                libraryState.scrollPositions[previousKey] =
+                    previousScrollPosition;
+            }
         };
     });
 
