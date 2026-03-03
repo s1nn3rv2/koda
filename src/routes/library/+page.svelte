@@ -1,6 +1,6 @@
 <script lang="ts">
     import { libraryState } from "$lib/state/library.svelte";
-    import { uiState } from "$lib/state/player.svelte";
+    import { uiState, playbackState, queueState } from "$lib/state/player.svelte";
     import LibraryHeader from "$lib/components/Library/LibraryHeader.svelte";
     import SidebarSection from "$lib/components/Library/SidebarSection.svelte";
     import MainSection from "$lib/components/Library/Views/MainSection.svelte";
@@ -10,6 +10,8 @@
     import { PanelLeft } from "@lucide/svelte";
     import { fly, fade, scale, crossfade } from "svelte/transition";
     import { cubicInOut } from "svelte/easing";
+
+    let mainSectionRef = $state<ReturnType<typeof MainSection>>();
 
     const [send, receive] = crossfade({
         duration: 400,
@@ -54,10 +56,14 @@
         </div>
 
         <div class="flex-1 flex flex-col min-w-0">
-            <MainSection />
+            <MainSection bind:this={mainSectionRef} />
         </div>
     </div>
 
-    <TagEditorModal />
+    <TagEditorModal onSave={(track) => {
+        mainSectionRef?.handleTrackUpdated(track);
+        playbackState.updateCurrentTrack(track);
+        queueState.updateTrack(track);
+    }} />
     <ImportModal />
 </main>

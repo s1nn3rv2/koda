@@ -253,6 +253,11 @@
         }
     }
 
+    export function handleTrackUpdated(updatedTrack: Track) {
+        contentTracks = contentTracks.map(t => t.id === updatedTrack.id ? updatedTrack : t);
+        searchResults = searchResults.map(t => t.id === updatedTrack.id ? updatedTrack : t);
+    }
+
     async function handleArtistClick(name: string) {
         await libraryState.selectArtist(name);
     }

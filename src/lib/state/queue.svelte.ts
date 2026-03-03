@@ -176,6 +176,11 @@ export class QueueState {
     clearQueue() {
         this.manualQueue = [];
     }
+
+    updateTrack(updatedTrack: Track) {
+        this.manualQueue = this.manualQueue.map(t => t.id === updatedTrack.id ? updatedTrack : t);
+        this.playbackContext = this.playbackContext.map(t => t.id === updatedTrack.id ? updatedTrack : t);
+    }
 }
 
 export const queueState = new QueueState();

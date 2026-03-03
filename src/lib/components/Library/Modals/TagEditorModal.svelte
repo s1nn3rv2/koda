@@ -14,6 +14,9 @@
     } from "@lucide/svelte";
     import { fade, scale } from "svelte/transition";
     import type { Component } from "svelte";
+    import type { Track } from "$lib/types";
+
+    let { onSave }: { onSave?: (track: Track) => void } = $props();
 
     let track = $derived(libraryState.trackToEdit);
 
@@ -49,7 +52,7 @@
         if (!track) return;
         isSaving = true;
         try {
-            await TauriService.updateTrackMetadata(track.id, {
+            const updatedTrack = await TauriService.updateTrackMetadata(track.id, {
                 title: title || null,
                 artists: artists || null,
                 album: album || null,
@@ -59,6 +62,7 @@
                 releaseDate: releaseDate || null,
                 genre: genre || null,
             });
+            if (onSave) onSave(updatedTrack);
             libraryState.refresh();
             close();
         } catch (e) {

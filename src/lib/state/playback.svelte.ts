@@ -162,6 +162,12 @@ export class PlaybackState {
         this.stopPositionTracking();
         TauriService.stop().catch(console.error);
     }
+
+    updateCurrentTrack(updatedTrack: Track) {
+        if (this.currentTrack?.id === updatedTrack.id) {
+            this.currentTrack = updatedTrack;
+        }
+    }
 }
 
 export const playbackState = new PlaybackState();

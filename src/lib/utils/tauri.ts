@@ -300,8 +300,8 @@ export class TauriService {
     return invoke("get_library_stats");
   }
 
-  static async updateTrackMetadata(id: string, metadata: any): Promise<void> {
-    return invoke("update_track_metadata", { id, metadata });
+  static async updateTrackMetadata(id: string, metadata: any): Promise<Track> {
+    return invoke("update_track_metadata", { trackId: id, ...metadata });
   }
 
   static async fetchArtistMetadata(
