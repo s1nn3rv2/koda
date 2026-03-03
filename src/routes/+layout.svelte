@@ -1,9 +1,10 @@
-<script>
+<script lang="ts">
     import MusicPlayer from "$lib/components/MusicPlayer/MusicPlayer.svelte";
     import ContextMenu from "$lib/components/ContextMenu.svelte";
     import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
     import TitleBar from "$lib/components/TitleBar.svelte";
     import SettingsModal from "$lib/components/Settings/SettingsModal.svelte";
+    import { libraryState } from "$lib/state/library.svelte";
     import "../app.css";
 
     let { children } = $props();

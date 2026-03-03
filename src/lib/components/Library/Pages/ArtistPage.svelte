@@ -211,6 +211,7 @@
         {ondelete}
         {ondeletefile}
         {onalbumclick}
+        onartistclick={(artistName) => libraryState.selectArtist(artistName)}
         layout="grid"
     />
 </div>
